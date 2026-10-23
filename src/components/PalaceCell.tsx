@@ -111,9 +111,10 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
         </div>
       )}
 
-      {/* Sao lưu / đại vận */}
+      {/* Vùng vận hạn: sao lưu / đại vận và chân ô, nền riêng */}
+      <div className="-mx-1.5 -mb-1.5 mt-0.5 border-t border-border/60 bg-muted/70 px-1.5 pb-1.5 pt-0.5 dark:bg-muted/40">
       {layered.length > 0 && (
-        <div className="mt-0.5 flex flex-wrap gap-x-1 border-t border-dashed pt-0.5">
+        <div className="flex flex-wrap gap-x-1">
           {layered.map((s) => (
             <StarItem key={s.layer + s.id + s.displayName} star={s} {...starProps} />
           ))}
@@ -130,6 +131,7 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
         <span className="text-muted-foreground" title="Tiểu hạn: năm có địa chi này">
           {branchName(palace.minorPeriodYearBranch)}
         </span>
+      </div>
       </div>
 
     </div>

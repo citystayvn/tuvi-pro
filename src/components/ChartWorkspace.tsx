@@ -466,7 +466,7 @@ export function ChartWorkspace() {
                       <CardTitle>Chi tiết</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm text-muted-foreground">
-                      <p>Nhấp vào một cung để xem tam phương tứ chính, sao hội chiếu và bộ sao.</p>
+                      <p>Nhấp vào một cung để xem sao hội chiếu (tam hợp, xung chiếu, giáp cung) và bộ sao.</p>
                       <p>Nhấp vào một sao để xem vị trí, trạng thái Miếu Hãm, ý nghĩa và các sao hội chiếu.</p>
                       <Legend />
                     </CardContent>

@@ -28,6 +28,9 @@ interface ChartState {
   saved: SavedChart[];
   saveChart: (c: SavedChart) => void;
   removeChart: (id: string) => void;
+  /** Ý nghĩa riêng của sao tại một cung do người dùng tự viết. Khoá: "<id sao>@<tên cung>". */
+  starPalaceNotes: Record<string, string>;
+  setStarPalaceNote: (key: string, text: string) => void;
 }
 
 export const DEFAULT_DISPLAY: DisplayOptions = {
@@ -50,6 +53,14 @@ export const useChartStore = create<ChartState>()(
       saved: [],
       saveChart: (c) => set((s) => ({ saved: [c, ...s.saved.filter((x) => x.id !== c.id)].slice(0, 50) })),
       removeChart: (id) => set((s) => ({ saved: s.saved.filter((x) => x.id !== id) })),
+      starPalaceNotes: {},
+      setStarPalaceNote: (key, text) =>
+        set((s) => {
+          const next = { ...s.starPalaceNotes };
+          if (text.trim()) next[key] = text.trim();
+          else delete next[key];
+          return { starPalaceNotes: next };
+        }),
     }),
     { name: "tuvi-pro-store", version: 1 },
   ),

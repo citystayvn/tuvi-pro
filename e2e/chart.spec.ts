@@ -49,7 +49,7 @@ test("Nhấp vào sao và cung hiển thị chi tiết", async ({ page }) => {
   await page.locator('[data-palace="dan"]').click({ position: { x: 10, y: 10 } });
   const palace = page.getByTestId("palace-detail");
   await expect(palace).toBeVisible();
-  await expect(palace).toContainText("Tam phương tứ chính");
+  await expect(palace).toContainText("Xung chiếu");
   await expect(palace).toContainText("Thiên Di");
 });
 
@@ -106,4 +106,19 @@ test("Sửa thông tin và lập lại lá số giữ nguyên ngày sinh khác",
   await page.getByRole("button", { name: "Lập lại lá số" }).click();
   await expect(page).toHaveURL(/d=1995-8-15/);
   await expect(page.getByTestId("tuvi-chart").getByText("Trần B")).toBeVisible();
+});
+
+test("Thêm và sửa ý nghĩa riêng của sao tại một cung", async ({ page }) => {
+  await page.goto(CHART_URL);
+  await page.locator('[data-palace="ngo"] [data-star="tu-vi"]').click();
+  const detail = page.getByTestId("star-detail");
+  await expect(detail).toContainText("Ý nghĩa tại cung Quan Lộc");
+  await detail.getByRole("button", { name: "Thêm ý nghĩa" }).click();
+  await page.locator("#star-palace-note").fill("Tử Vi ở Quan Lộc: sự nghiệp vững, có quyền.");
+  await detail.getByRole("button", { name: "Lưu" }).click();
+  await expect(detail).toContainText("sự nghiệp vững, có quyền");
+  await page.reload();
+  await page.locator('[data-palace="ngo"] [data-star="tu-vi"]').click();
+  await expect(page.getByTestId("star-detail")).toContainText("sự nghiệp vững, có quyền");
+  await expect(page.getByTestId("star-detail").getByRole("button", { name: "Sửa ý nghĩa" })).toBeVisible();
 });

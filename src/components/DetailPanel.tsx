@@ -1,5 +1,8 @@
 "use client";
-import { ArrowLeftRight, Info, Layers, Triangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeftRight, Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
+import { useChartStore } from "@/store/useChartStore";
+import { Button } from "@/components/ui/button";
 import type { ChartStar, TuViChart } from "@/types/chart";
 import { analyzePalace, analyzeStar } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
@@ -52,11 +55,7 @@ function StarChips({ stars, onSelectStar }: { stars: ChartStar[]; onSelectStar: 
 export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { chart: TuViChart; branch: number; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
   const a = analyzePalace(chart, branch);
   const p = a.palace;
-  const PalaceLink = ({ b }: { b: number }) => (
-    <button onClick={() => onSelectPalace(b)} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium hover:bg-accent">
-      {chart.palaces[b].name} ({branchName(b)})
-    </button>
-  );
+
   const byLayer = (layer: ChartStar["layer"]) => p.stars.filter((s) => s.layer === layer && s.category !== "trang-sinh-cycle");
   return (
     <div className="space-y-5" data-testid="palace-detail">
@@ -112,25 +111,8 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
         </div>
       </Section>
 
-      <Section title="Tam phương tứ chính" icon={<Triangle className="h-3.5 w-3.5" />}>
-        <div className="flex flex-wrap items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">Tam hợp:</span>
-          <PalaceLink b={a.trine[0].branch} />
-          <PalaceLink b={a.trine[1].branch} />
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">Xung chiếu:</span>
-          <PalaceLink b={a.opposite.branch} />
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">Giáp cung:</span>
-          <PalaceLink b={a.flanking[0].branch} />
-          <PalaceLink b={a.flanking[1].branch} />
-        </div>
-      </Section>
-
       <Section title="Sao hội chiếu" icon={<ArrowLeftRight className="h-3.5 w-3.5" />}>
-        <StarChips stars={a.converging.filter((s) => s.category !== "trang-sinh-cycle" && !s.category.endsWith("-cycle"))} onSelectStar={onSelectStar} />
+        <ConvergingGroups chart={chart} branch={branch} onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
       </Section>
 
       <Section title="Bộ sao liên quan">
@@ -207,12 +189,107 @@ export function StarDetail({ chart, star, onSelectStar, onSelectPalace }: { char
         <p className="text-sm text-muted-foreground">{a.meaning ?? "Chưa có nội dung luận giải cho sao này."}</p>
       </Section>
 
+      <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} />
+
       <Section title="Đồng cung">
         <StarChips stars={a.together.filter((s) => !s.category.endsWith("-cycle"))} onSelectStar={onSelectStar} />
       </Section>
-      <Section title="Sao hội chiếu (tam phương tứ chính)">
-        <StarChips stars={a.converging.filter((s) => !s.category.endsWith("-cycle"))} onSelectStar={onSelectStar} />
+      <Section title="Sao hội chiếu" icon={<ArrowLeftRight className="h-3.5 w-3.5" />}>
+        <ConvergingGroups chart={chart} branch={star.branch} onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
       </Section>
     </div>
+  );
+}
+
+/** Sao hội chiếu chia theo tam hợp, xung chiếu, giáp cung; mỗi mục hai hàng Tốt / Xấu. */
+function ConvergingGroups({ chart, branch, onSelectStar, onSelectPalace }: { chart: TuViChart; branch: number; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
+  const a = analyzePalace(chart, branch);
+  return (
+    <div className="space-y-3">
+      {[
+        { label: "Tam hợp", palaces: a.trine },
+        { label: "Xung chiếu", palaces: [a.opposite] },
+        { label: "Giáp cung", palaces: a.flanking },
+      ].map((grp) => {
+        const stars = grp.palaces.flatMap((pl) => pl.stars.filter((st) => st.layer === "natal" && !st.category.endsWith("-cycle")));
+        const bad = stars.filter((st) => st.nature === "bad" || st.id === "hoa-ky");
+        const good = stars.filter((st) => !bad.includes(st));
+        return (
+          <div key={grp.label} className="rounded-lg border p-2">
+            <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="font-semibold">{grp.label}</span>
+              {grp.palaces.map((pl) => (
+                <button key={pl.branch} onClick={() => onSelectPalace(pl.branch)} className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent">
+                  {pl.name} ({branchName(pl.branch)})
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-[40px_1fr] items-start gap-x-2 gap-y-1.5">
+              <span className="pt-0.5 text-[11px] font-medium text-good">Tốt</span>
+              <StarChips stars={good} onSelectStar={onSelectStar} />
+              <span className="pt-0.5 text-[11px] font-medium text-bad">Xấu</span>
+              <StarChips stars={bad} onSelectStar={onSelectStar} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Ý nghĩa riêng của một sao khi đóng tại một cung – người dùng tự viết và sửa. */
+function StarPalaceNote({ starId, starName, palaceName }: { starId: string; starName: string; palaceName: string }) {
+  const key = `${starId}@${palaceName}`;
+  const note = useChartStore((s) => s.starPalaceNotes[key]);
+  const setNote = useChartStore((s) => s.setStarPalaceNote);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  useEffect(() => setEditing(false), [key]);
+
+  return (
+    <Section title={`Ý nghĩa tại cung ${palaceName}`}>
+      {editing ? (
+        <div className="space-y-2">
+          <textarea
+            id="star-palace-note"
+            aria-label={`Ý nghĩa của ${starName} tại cung ${palaceName}`}
+            className="min-h-[96px] w-full rounded-lg border border-input bg-card p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={`Ví dụ: ${starName} tại ${palaceName} chủ về…`}
+            autoFocus
+          />
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => { setNote(key, draft); setEditing(false); }}>
+              <Check /> Lưu
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
+              Huỷ
+            </Button>
+            {note && (
+              <Button size="sm" variant="ghost" className="ml-auto text-destructive" onClick={() => { setNote(key, ""); setEditing(false); }}>
+                <Trash2 /> Xoá
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {mounted && note ? (
+            <p className="whitespace-pre-wrap text-sm">{note}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Chưa có ý nghĩa riêng cho {starName} khi ở cung {palaceName}.
+            </p>
+          )}
+          <Button size="sm" variant="outline" onClick={() => { setDraft(note ?? ""); setEditing(true); }}>
+            <PencilLine /> {note ? "Sửa ý nghĩa" : "Thêm ý nghĩa"}
+          </Button>
+          <p className="text-[11px] text-muted-foreground">Áp dụng cho mọi lá số có {starName} tại cung {palaceName}. Lưu trên trình duyệt này.</p>
+        </div>
+      )}
+    </Section>
   );
 }
