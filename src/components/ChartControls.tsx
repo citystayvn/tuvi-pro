@@ -32,7 +32,7 @@ const TOGGLES: { key: keyof DisplayOptions; label: string }[] = [
 export function ChartControls({ viewYear, onViewYear, display, onDisplay, zoom, onZoom, onFit }: Props) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="no-print space-y-3">
+    <div className="no-print relative">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1 rounded-lg border bg-card p-1 shadow-sm">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewYear(viewYear - 1)} aria-label="Năm trước">
@@ -75,7 +75,7 @@ export function ChartControls({ viewYear, onViewYear, display, onDisplay, zoom, 
         </Button>
       </div>
       {open && (
-        <div className="grid gap-2 rounded-xl border bg-card p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div className="absolute left-0 top-full z-30 mt-2 grid w-[min(640px,92vw)] gap-1 rounded-xl border bg-card p-2 shadow-lg sm:grid-cols-2">
           {TOGGLES.map((t) => (
             <label key={t.key} className={cn("flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted/60")}>
               {t.label}

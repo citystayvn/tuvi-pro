@@ -25,12 +25,16 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
   const aux = natal.filter((s) => {
     if (s.category === "main" || s.category === "trang-sinh-cycle") return false;
     if (s.category === "transformation") return display.showTransformations;
-    if (CYCLE_CATEGORIES.has(s.category)) return display.showCycles && display.showAuxiliary;
+    if (CYCLE_CATEGORIES.has(s.category)) return false;
     if (MINOR_CATEGORIES.has(s.category)) return display.showMinorStars && display.showAuxiliary;
     return display.showAuxiliary;
   });
   const good = aux.filter((s) => s.nature === "good" || (s.category === "transformation" && s.id !== "hoa-ky"));
   const bad = aux.filter((s) => !good.includes(s));
+  // Sao vòng Bác Sĩ (trái) và vòng Thái Tuế (phải) hiển thị trên một dòng riêng ở chân ô để tiết kiệm chiều cao.
+  const showCycles = display.showCycles && display.showAuxiliary;
+  const bacSi = natal.find((s) => s.category === "bac-si-cycle");
+  const thaiTue = natal.find((s) => s.category === "thai-tue-cycle");
   const layered = palace.stars.filter(
     (s) => (s.layer === "annual" && display.showAnnualStars) || (s.layer === "decadal" && display.showDecadalStars),
   ).filter((s) => display.showTransformations || s.category !== "transformation");
@@ -78,7 +82,7 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
       )}
 
       {/* Chính tinh */}
-      <div className="mt-1 flex min-h-[18px] flex-col items-center">
+      <div className="mt-0.5 flex min-h-[16px] flex-col items-center">
         {main.length === 0 ? (
           <span className="text-[10px] italic text-muted-foreground/70">Vô chính diệu</span>
         ) : (
@@ -87,7 +91,7 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
       </div>
 
       {/* Phụ tinh: cát (trái) – sát/hung (phải) */}
-      <div className="mt-1 grid min-h-0 flex-1 grid-cols-2 gap-x-1 overflow-hidden">
+      <div className="mt-0.5 grid min-h-0 flex-1 grid-cols-2 gap-x-1 overflow-hidden">
         <div className="flex min-w-0 flex-col">
           {good.map((s) => (
             <StarItem key={s.id + s.layer} star={s} selected={selectedStarId === s.id} {...starProps} />
@@ -106,6 +110,13 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
           {layered.map((s) => (
             <StarItem key={s.layer + s.id + s.displayName} star={s} {...starProps} />
           ))}
+        </div>
+      )}
+
+      {showCycles && (bacSi || thaiTue) && (
+        <div className="flex items-center justify-between gap-1">
+          {bacSi ? <StarItem star={bacSi} selected={selectedStarId === bacSi.id} {...starProps} /> : <span />}
+          {thaiTue ? <StarItem star={thaiTue} selected={selectedStarId === thaiTue.id} {...starProps} /> : <span />}
         </div>
       )}
 

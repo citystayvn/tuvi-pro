@@ -30,7 +30,7 @@ export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ 
     <div
       ref={ref}
       data-testid="tuvi-chart"
-      className="print-area grid aspect-[1/1.02] w-full grid-cols-4 grid-rows-4 gap-px overflow-hidden rounded-xl border-2 border-foreground/80 bg-foreground/25 shadow-sm"
+      className="print-area grid h-full w-full grid-cols-4 grid-rows-4 gap-px overflow-hidden rounded-xl border-2 border-foreground/80 bg-foreground/25 shadow-sm"
     >
       {chart.palaces.map((p) => {
         const pos = BRANCH_GRID[p.branch];

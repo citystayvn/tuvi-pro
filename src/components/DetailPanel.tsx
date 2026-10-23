@@ -2,7 +2,6 @@
 import { ArrowLeftRight, Info, Layers, Triangle } from "lucide-react";
 import type { ChartStar, TuViChart } from "@/types/chart";
 import { analyzePalace, analyzeStar } from "@/core/interpretation";
-import { getStarDef } from "@/config/stars/registry";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
 import { ELEMENT_NAMES } from "@/core/elements";
 import { branchName, canChiName } from "@/core/stems-branches";
@@ -164,8 +163,6 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
 
 export function StarDetail({ chart, star, onSelectStar, onSelectPalace }: { chart: TuViChart; star: ChartStar; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
   const a = analyzeStar(chart, star);
-  const def = getStarDef(star.id);
-  const verification = VERIFICATION_BADGE[def.verification];
   return (
     <div className="space-y-5" data-testid="star-detail">
       <div>
@@ -208,16 +205,6 @@ export function StarDetail({ chart, star, onSelectStar, onSelectPalace }: { char
           </div>
         </Section>
       )}
-
-      <Section title="Quy tắc an sao">
-        <p className="text-sm">{def.rule}</p>
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-          <code className="rounded bg-muted px-1.5 py-0.5">{star.sourceRuleId}</code>
-          <Badge variant={verification.variant}>{verification.label}</Badge>
-        </div>
-        <p className="text-[11px] text-muted-foreground">Nguồn: {def.source}</p>
-        {def.conflictNote && <p className="rounded-md bg-amber-50 p-2 text-[11px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{def.conflictNote}</p>}
-      </Section>
 
       <Section title="Ý nghĩa truyền thống (tham khảo)">
         <p className="text-sm text-muted-foreground">{a.meaning ?? "Chưa có nội dung luận giải cho sao này."}</p>

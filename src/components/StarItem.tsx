@@ -26,8 +26,8 @@ export function StarItem({ star, size = "aux", showBrightness, showTransformatio
       }}
       title={`${star.displayName}${star.brightness && star.brightness !== "UNDEFINED" ? ` (${star.brightness})` : ""}`}
       className={cn(
-        "group inline-flex max-w-full items-center gap-0.5 truncate rounded px-0.5 text-left leading-tight transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-        size === "main" ? "text-[13px] font-bold uppercase tracking-wide" : "text-[11px] font-medium",
+        "group inline-flex max-w-full items-center gap-0.5 truncate rounded px-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        size === "main" ? "text-[13px] font-bold uppercase leading-[16px] tracking-wide" : "text-[11px] font-medium leading-[12.5px]",
         starTextClass(star),
         selected && "bg-accent ring-1 ring-primary",
       )}
