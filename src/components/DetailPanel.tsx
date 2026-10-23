@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeftRight, Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
 import { useChartStore } from "@/store/useChartStore";
 import { Button } from "@/components/ui/button";
@@ -235,14 +235,20 @@ function ConvergingGroups({
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-[52px_1fr] items-start gap-x-2 gap-y-1.5">
-              {rows.map((r) => (
-                <Fragment key={r.label}>
-                  <span className={cn("pt-0.5 text-[11px] font-medium", r.cls)}>{r.label}</span>
+            <div className="grid grid-cols-2 gap-2">
+              {rows.slice(0, 2).map((r) => (
+                <div key={r.label} className="min-w-0">
+                  <div className={cn("mb-1 text-[11px] font-medium", r.cls)}>{r.label}</div>
                   <StarChips stars={r.stars} onSelectStar={onSelectStar} />
-                </Fragment>
+                </div>
               ))}
             </div>
+            {rows.slice(2).map((r) => (
+              <div key={r.label} className="mt-2">
+                <div className={cn("mb-1 text-[11px] font-medium", r.cls)}>{r.label}</div>
+                <StarChips stars={r.stars} onSelectStar={onSelectStar} />
+              </div>
+            ))}
           </div>
         );
       })}
