@@ -77,7 +77,7 @@ export function elementRelation(a: Element, b: Element): ElementRelation {
 export function menhCucRelationLabel(menh: Element, cuc: Element): string {
   switch (elementRelation(menh, cuc)) {
     case "same":
-      return "Mệnh Cục bình hòa";
+      return "Bình hòa";
     case "a-generates-b":
       return "Mệnh sinh Cục";
     case "b-generates-a":

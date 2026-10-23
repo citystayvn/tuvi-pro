@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, LayoutGrid, Link2, Pencil, Printer, ScrollText, SlidersHorizontal, Table2 } from "lucide-react";
+import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, LayoutGrid, Link2, Pencil, Printer, ScrollText, SlidersHorizontal } from "lucide-react";
 import { buildChart, type ChartRequest } from "@/core/chart/buildChart";
 import { CalendarInputError } from "@/core/calendar";
 import type { ChartStar } from "@/types/chart";
@@ -22,7 +22,6 @@ import { CenterEditForm } from "./CenterEditForm";
 import { Switch } from "./ui/switch";
 import { PalaceDetail, StarDetail } from "./DetailPanel";
 import { InterpretationView } from "./InterpretationView";
-import { CalculationDataView } from "./CalculationDataView";
 import { BirthForm } from "./BirthForm";
 
 /** Bản đóng gói chạy trong Claude: khung xem chặn in, tải file và liên kết trang. */
@@ -75,7 +74,7 @@ export function ChartWorkspace() {
   }, [request, viewYear]);
 
   const [showWarnings, setShowWarnings] = useState(false);
-  const [tab, setTab] = useState<"chart" | "interpretation" | "data">("chart");
+  const [tab, setTab] = useState<"chart" | "interpretation">("chart");
   const [centerMode, setCenterMode] = useState<"info" | "edit" | "display">("info");
 
   // Lá số luôn lấp đúng phần khung nhìn còn lại của trình duyệt – không bao giờ phải cuộn.
@@ -273,15 +272,12 @@ export function ChartWorkspace() {
         </p>
       </div>
       {actions}
-      <TabsList className="grid h-9 w-full grid-cols-3">
+      <TabsList className="grid h-9 w-full grid-cols-2">
         <TabsTrigger value="chart">
           <LayoutGrid /> Lá số
         </TabsTrigger>
         <TabsTrigger value="interpretation">
           <ScrollText /> Luận giải
-        </TabsTrigger>
-        <TabsTrigger value="data">
-          <Table2 /> Dữ liệu
         </TabsTrigger>
       </TabsList>
       {tab === "chart" && <ChartControls viewYear={viewYear} onViewYear={changeYear} display={display} onDisplay={setDisplay} inline />}
@@ -316,9 +312,6 @@ export function ChartWorkspace() {
         <span className="mx-0.5 h-4 w-px bg-border" />
         <button type="button" className={cBtn()} onClick={() => setTab("interpretation")}>
           <ScrollText /> Luận giải
-        </button>
-        <button type="button" className={cBtn()} onClick={() => setTab("data")}>
-          <Table2 /> Dữ liệu
         </button>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-1">
@@ -424,7 +417,7 @@ export function ChartWorkspace() {
         <Button variant="outline" size="sm" onClick={() => setTab("chart")}>
           <ChevronLeft /> Quay lại lá số
         </Button>
-        {tab === "interpretation" ? <InterpretationView chart={chart} /> : <CalculationDataView chart={chart} />}
+        <InterpretationView chart={chart} />
       </div>
     );
 

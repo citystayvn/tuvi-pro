@@ -79,7 +79,7 @@ describe("[Palace Engine] Ngũ hành Cục – bảng tra truyền thống", () 
     expect(menhCucRelationLabel("KIM", "THO")).toBe("Cục sinh Mệnh");
     expect(menhCucRelationLabel("KIM", "MOC")).toBe("Mệnh khắc Cục");
     expect(menhCucRelationLabel("KIM", "HOA")).toBe("Cục khắc Mệnh");
-    expect(menhCucRelationLabel("KIM", "KIM")).toContain("bình hòa");
+    expect(menhCucRelationLabel("KIM", "KIM")).toBe("Bình hòa");
   });
   it("Âm Dương Nam Nữ", () => {
     expect(yinYangGenderDirection(0, "male")).toBe(1); // Dương Nam

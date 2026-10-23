@@ -1,6 +1,5 @@
 import type { TuViChart } from "@/types/chart";
-import { canChiName, stemName, branchName } from "@/core/stems-branches";
-import { ELEMENT_NAMES } from "@/core/elements";
+import { canChiName } from "@/core/stems-branches";
 import { SCHOOLS } from "@/config/schools";
 import { formatTz } from "@/utils/places";
 
@@ -28,35 +27,30 @@ export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolba
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>
         <div className="mt-0.5 truncate font-serif text-lg font-bold text-foreground">{chart.input.name || "Không tên"}</div>
         <div className="text-[11px] text-muted-foreground">
-          {chart.yinYangGender} · {canChiName(chart.yearStem, chart.yearBranch)}
+          {chart.yinYangGender} · {SCHOOLS[chart.input.schoolId]?.config.schoolName}
         </div>
       </div>
       {body ?? (
         <>
       <div className="grid gap-x-5 sm:grid-cols-2">
         <div>
-          <Row label="Dương lịch" value={`${pad(b.solar.hour)}:${pad(b.solar.minute)} ${pad(b.solar.day)}/${pad(b.solar.month)}/${b.solar.year}`} />
-          <Row label="Âm lịch" value={`${b.lunar.day}/${b.lunar.month}${b.lunar.isLeapMonth ? "N" : ""}/${b.lunar.year} · giờ ${branchName(b.hourBranch)}`} />
+          <Row label="Dương lịch" value={`${pad(b.solar.hour)}:${pad(b.solar.minute)} ${pad(b.solar.day)}/${pad(b.solar.month)}/${b.solar.year}${b.solar.timeZone !== 7 ? ` (${formatTz(b.solar.timeZone)})` : ""}`} />
+          <Row label="Âm lịch" value={`${b.lunar.day}/${b.lunar.month}${b.lunar.isLeapMonth ? " nhuận" : ""}/${b.lunar.year}`} />
           <Row label="Năm" value={canChiName(b.pillars.year.stem, b.pillars.year.branch)} />
           <Row label="Tháng" value={canChiName(b.pillars.month.stem, b.pillars.month.branch)} />
           <Row label="Ngày" value={canChiName(b.pillars.day.stem, b.pillars.day.branch)} />
           <Row label="Giờ" value={canChiName(b.pillars.hour.stem, b.pillars.hour.branch)} />
+          {chart.input.birthPlace && <Row label="Nơi sinh" value={chart.input.birthPlace} />}
         </div>
         <div>
           <Row label="Bản Mệnh" value={chart.banMenh.name} />
-          <Row label="Cục" value={chart.cuc.name} />
+          <Row label="Cục" value={`${chart.cuc.name} · khởi hạn ${chart.cuc.number} tuổi`} />
           <Row label="Mệnh – Cục" value={chart.menhCucRelation} />
-          <Row label="Chủ Mệnh / Thân" value={`${chart.chuMenh} / ${chart.chuThan}`} />
+          <Row label="Chủ Mệnh" value={chart.chuMenh} />
+          <Row label="Chủ Thân" value={chart.chuThan} />
           <Row label="Thân cư" value={chart.thanPalaceName} />
-          <Row label="Nơi sinh" value={`${chart.input.birthPlace || "—"} (${formatTz(b.solar.timeZone)})`} />
+          <Row label={`Tuổi năm ${chart.period.viewYear}`} value={`${chart.period.nominalAge} tuổi`} />
         </div>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 text-[10.5px]">
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-          Xem hạn {chart.period.viewYear} ({stemName(chart.period.viewYearStem)} {branchName(chart.period.viewYearBranch)}) · {chart.period.nominalAge} tuổi
-        </span>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{SCHOOLS[chart.input.schoolId]?.config.schoolName}</span>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Cục {ELEMENT_NAMES[chart.cuc.element]} · khởi hạn {chart.cuc.number} tuổi</span>
       </div>
         </>
       )}
