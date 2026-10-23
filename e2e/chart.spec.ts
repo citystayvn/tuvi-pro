@@ -113,7 +113,7 @@ test("Thêm và sửa ý nghĩa riêng của sao tại một cung", async ({ pag
   await page.locator('[data-palace="ngo"] [data-star="tu-vi"]').click();
   const detail = page.getByTestId("star-detail");
   await expect(detail).toContainText("Ý nghĩa tại cung Quan Lộc");
-  await detail.getByRole("button", { name: "Thêm ý nghĩa" }).click();
+  await detail.getByRole("button", { name: "Sửa ý nghĩa" }).click();
   await page.locator("#star-palace-note").fill("Tử Vi ở Quan Lộc: sự nghiệp vững, có quyền.");
   await detail.getByRole("button", { name: "Lưu" }).click();
   await expect(detail).toContainText("sự nghiệp vững, có quyền");

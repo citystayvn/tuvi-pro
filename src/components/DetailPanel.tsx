@@ -4,7 +4,7 @@ import { Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
 import { useChartStore } from "@/store/useChartStore";
 import { Button } from "@/components/ui/button";
 import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
-import { analyzePalace, analyzeStar, type StarGroupMatch } from "@/core/interpretation";
+import { analyzePalace, analyzeStar, cycleStarReading, type StarGroupMatch } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
 import { ELEMENT_NAMES } from "@/core/elements";
@@ -27,12 +27,13 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 const LAYER_LABEL = { natal: "Nguyên cục", decadal: "Đại vận", annual: "Lưu niên" } as const;
 
-function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
+function Section({ title, icon, action, children }: { title: string; icon?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
       <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         {title}
+        {action}
       </h4>
       {children}
     </section>
@@ -119,9 +120,15 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
   const a = analyzeStar(chart, star);
   // Bộ sao (tại tam phương tứ chính của cung) có chứa chính sao này.
   const starGroups = analyzePalace(chart, star.branch).groups.filter((g) => g.stars.includes(star.id));
+  const cycle = cycleStarReading(chart, star);
   return (
     <div className="space-y-5" data-testid="star-detail">
       <div>
+        {cycle && (
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {cycle.data.name} – {cycle.ringLabel}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <h3 className={cn("text-lg font-semibold", starTextClass(star))}>{star.displayName}</h3>
           {star.transformation && <span className={cn("rounded px-1.5 text-xs font-bold", TRANSFORMATION_STYLE[star.transformation].className)}>{TRANSFORMATION_STYLE[star.transformation].label}</span>}
@@ -145,7 +152,9 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
         </button>
         <div className="rounded-lg bg-muted/60 p-2">
           <div className="text-muted-foreground">Miếu / Vượng / Đắc / Hãm</div>
-          <div className="font-semibold">{star.brightness ? BRIGHTNESS_LABEL[star.brightness] : "Không có quy tắc"}</div>
+          <div className="font-semibold">
+            {star.brightness && star.brightness !== "UNDEFINED" ? BRIGHTNESS_LABEL[star.brightness] : cycle ? "Không có quy định trong hệ thống" : "Không có quy tắc"}
+          </div>
         </div>
       </div>
 
@@ -162,11 +171,54 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
         </Section>
       )}
 
-      <Section title="Ý nghĩa truyền thống (tham khảo)">
-        <p className="text-sm text-muted-foreground">{a.meaning ?? "Chưa có nội dung luận giải cho sao này."}</p>
-      </Section>
+      {cycle ? (
+        <>
+          <Section title="Tính chất">
+            <p className="text-sm">{cycle.data.core}</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-lg bg-emerald-50 p-2 text-sm dark:bg-emerald-950/40">
+                <div className="text-[11px] font-semibold text-good">Mặt tích cực</div>
+                {cycle.data.positive}
+              </div>
+              <div className="rounded-lg bg-rose-50 p-2 text-sm dark:bg-rose-950/40">
+                <div className="text-[11px] font-semibold text-bad">Mặt tiêu cực</div>
+                {cycle.data.negative}
+              </div>
+            </div>
+          </Section>
+          {star.layer !== "natal" && (
+            <p className="rounded-lg bg-muted/60 p-2 text-xs text-muted-foreground">
+              Đây là sao {star.layer === "annual" ? `lưu niên của năm ${chart.period.viewYear}` : "đại vận"}: chỉ tác động trong thời gian vận hạn. Luận giải theo cung bên dưới dành cho sao nguyên cục.
+            </p>
+          )}
+        </>
+      ) : (
+        <Section title="Ý nghĩa truyền thống (tham khảo)">
+          <p className="text-sm text-muted-foreground">{a.meaning ?? "Chưa có nội dung luận giải cho sao này."}</p>
+        </Section>
+      )}
 
-      <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} />
+      {star.layer === "natal" && <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} defaultText={cycle?.palaceText ?? undefined} />}
+
+      {cycle && (cycle.combos.length > 0 || cycle.transformationNotes.length > 0) && (
+        <Section title="Tác động của sao đồng cung, hội chiếu">
+          <ul className="space-y-1.5">
+            {cycle.combos.map((c, i) => (
+              <li key={i} className={cn("rounded-lg border-l-2 bg-muted/40 p-2 text-sm", c.tone === "good" ? "border-good" : c.tone === "bad" ? "border-bad" : "border-amber-500")}>
+                {c.text}
+                <div className="mt-0.5 text-[11px] text-muted-foreground">
+                  {c.scope === "dong-cung" ? "Đồng cung" : "Tam phương tứ chính"}: {c.matched.map((id) => getStarDef(id).name).join(", ")}
+                </div>
+              </li>
+            ))}
+            {cycle.transformationNotes.map((t) => (
+              <li key={t} className="rounded-lg bg-muted/40 p-2 text-sm text-muted-foreground">
+                {t}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {starGroups.length > 0 && (
         <Section title="Bộ sao liên quan">
@@ -249,8 +301,8 @@ function ConvergingGroups({
   );
 }
 
-/** Ý nghĩa riêng của một sao khi đóng tại một cung – người dùng tự viết và sửa. */
-function StarPalaceNote({ starId, starName, palaceName }: { starId: string; starName: string; palaceName: string }) {
+/** Ý nghĩa của sao tại một cung: dữ liệu luận giải sẵn có (nếu có), người dùng sửa / bổ sung được. */
+function StarPalaceNote({ starId, starName, palaceName, defaultText }: { starId: string; starName: string; palaceName: string; defaultText?: string }) {
   const key = `${starId}@${palaceName}`;
   const note = useChartStore((s) => s.starPalaceNotes[key]);
   const setNote = useChartStore((s) => s.setStarPalaceNote);
@@ -259,9 +311,26 @@ function StarPalaceNote({ starId, starName, palaceName }: { starId: string; star
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   useEffect(() => setEditing(false), [key]);
+  const custom = mounted ? note : undefined;
+  const shown = custom ?? defaultText;
+
+  const editButton = !editing && (
+    <button
+      type="button"
+      onClick={() => {
+        setDraft(shown ?? "");
+        setEditing(true);
+      }}
+      aria-label="Sửa ý nghĩa"
+      title={shown ? "Sửa ý nghĩa" : "Thêm ý nghĩa"}
+      className="rounded p-0.5 text-muted-foreground normal-case hover:bg-muted hover:text-foreground"
+    >
+      <PencilLine className="h-3.5 w-3.5" />
+    </button>
+  );
 
   return (
-    <Section title={`Ý nghĩa tại cung ${palaceName}`}>
+    <Section title={`Ý nghĩa tại cung ${palaceName}`} action={editButton}>
       {editing ? (
         <div className="space-y-2">
           <textarea
@@ -274,33 +343,23 @@ function StarPalaceNote({ starId, starName, palaceName }: { starId: string; star
             autoFocus
           />
           <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => { setNote(key, draft); setEditing(false); }}>
+            <Button size="sm" onClick={() => { setNote(key, draft === defaultText ? "" : draft); setEditing(false); }}>
               <Check /> Lưu
             </Button>
             <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
               Huỷ
             </Button>
-            {note && (
+            {custom && (
               <Button size="sm" variant="ghost" className="ml-auto text-destructive" onClick={() => { setNote(key, ""); setEditing(false); }}>
-                <Trash2 /> Xoá
+                <Trash2 /> {defaultText ? "Khôi phục mặc định" : "Xoá"}
               </Button>
             )}
           </div>
         </div>
+      ) : shown ? (
+        <p className="whitespace-pre-wrap text-sm">{shown}</p>
       ) : (
-        <div className="space-y-2">
-          {mounted && note ? (
-            <p className="whitespace-pre-wrap text-sm">{note}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Chưa có ý nghĩa riêng cho {starName} khi ở cung {palaceName}.
-            </p>
-          )}
-          <Button size="sm" variant="outline" onClick={() => { setDraft(note ?? ""); setEditing(true); }}>
-            <PencilLine /> {note ? "Sửa ý nghĩa" : "Thêm ý nghĩa"}
-          </Button>
-          <p className="text-[11px] text-muted-foreground">Áp dụng cho mọi lá số có {starName} tại cung {palaceName}. Lưu trên trình duyệt này.</p>
-        </div>
+        <p className="text-sm text-muted-foreground">Chưa có.</p>
       )}
     </Section>
   );

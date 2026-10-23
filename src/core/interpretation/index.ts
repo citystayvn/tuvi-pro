@@ -8,6 +8,8 @@ import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
 import { branchAt } from "@/core/stems-branches";
 import { tamPhuongTuChinh } from "@/core/palaces";
 import { PALACE_MEANINGS, STAR_MEANINGS } from "./meanings";
+import { CYCLE_STAR_BY_ID, RING_LABEL, TRANSFORMATION_FOCUS, type ComboRule, type CycleStarInterpretation, type PalaceName } from "./cycle-stars";
+import { brightnessOf } from "@/core/brightness";
 
 export { PALACE_MEANINGS, STAR_MEANINGS };
 
@@ -156,4 +158,46 @@ export function chartOverview(chart: TuViChart): { title: string; body: string }
   items.push({ title: "Mệnh – Cục", body: `Bản mệnh ${chart.banMenh.name}, ${chart.cuc.name}: ${chart.menhCucRelation}.` });
   if (menh.groups.length) items.push({ title: "Bộ sao tại tam phương Mệnh", body: menh.groups.map((g) => `${g.name}: ${g.description}`).join(" ") });
   return items;
+}
+
+// ---------------- Vòng Thái Tuế / Bác Sĩ ----------------
+
+export interface CycleStarReading {
+  data: CycleStarInterpretation;
+  ringLabel: string;
+  /** Ý nghĩa tại cung đang xét – chỉ có với sao nguyên cục. */
+  palaceText: string | null;
+  palaceName: string;
+  /** Trạng thái Miếu/Hãm theo hệ thống đang dùng; null nếu không có quy định. */
+  brightnessRule: string | null;
+  combos: (ComboRule & { matched: string[] })[];
+  transformationNotes: string[];
+}
+
+export function cycleStarReading(chart: TuViChart, star: ChartStar): CycleStarReading | null {
+  const data = CYCLE_STAR_BY_ID[star.id];
+  if (!data) return null;
+  const palace = chart.palaces[star.branch];
+  const t = tamPhuongTuChinh(star.branch);
+  const natalAt = (b: BranchIndex) => chart.palaces[b].stars.filter((s) => s.layer === "natal" && s !== star).map((s) => s.id);
+  const same = new Set(natalAt(star.branch));
+  const tamPhuong = new Set([star.branch, t.opposite, ...t.trine].flatMap(natalAt));
+  const combos = data.combos
+    .map((c) => ({ ...c, matched: c.with.filter((id) => (c.scope === "dong-cung" ? same : tamPhuong).has(id)) }))
+    .filter((c) => c.matched.length > 0);
+  // Ghi chú Tứ Hóa chung, trừ khi một tổ hợp riêng đã nói về chính sao Hóa đó.
+  const covered = new Set(combos.flatMap((c) => c.matched));
+  const transformationNotes = Object.keys(TRANSFORMATION_FOCUS)
+    .filter((id) => same.has(id) && !covered.has(id))
+    .map((id) => TRANSFORMATION_FOCUS[id]);
+  const b = brightnessOf(star.id, star.branch, chart.rules.brightness.table, chart.rules.brightness.auxiliary);
+  return {
+    data,
+    ringLabel: RING_LABEL[data.ring],
+    palaceText: star.layer === "natal" ? data.palaces[palace.name as PalaceName] : null,
+    palaceName: palace.name,
+    brightnessRule: b && b !== "UNDEFINED" ? b : null,
+    combos,
+    transformationNotes: star.layer === "natal" ? transformationNotes : [],
+  };
 }
