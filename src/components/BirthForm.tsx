@@ -88,9 +88,9 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [gender, setGender] = useState<"male" | "female">(initial?.gender ?? "male");
   const [calendar, setCalendar] = useState<"solar" | "lunar">(initial?.birth.calendar ?? "solar");
-  const [day, setDay] = useState(String(initial?.birth.day ?? ""));
-  const [month, setMonth] = useState(String(initial?.birth.month ?? ""));
-  const [year, setYear] = useState(String(initial?.birth.year ?? ""));
+  const [day, setDay] = useState(String(initial?.birth.day ?? 1));
+  const [month, setMonth] = useState(String(initial?.birth.month ?? 1));
+  const [year, setYear] = useState(String(initial?.birth.year ?? 2000));
   const [isLeap, setIsLeap] = useState(initial?.birth.isLeapMonth ?? false);
   const [hour, setHour] = useState(String(initial?.birth.hour ?? 12));
   const [minute, setMinute] = useState(String(initial?.birth.minute ?? 30));
