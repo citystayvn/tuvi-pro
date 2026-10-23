@@ -35,6 +35,22 @@ function Segmented<T extends string>({ value, onChange, options, name }: { value
   );
 }
 
+/** Ô nhập số dạng gõ tay (không mũi tên tăng giảm, không dropdown). Chỉ nhận chữ số. */
+function NumberInput({ id, value, onChange, placeholder, maxLength }: { id: string; value: string; onChange: (v: string) => void; placeholder?: string; maxLength: number }) {
+  return (
+    <Input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      maxLength={maxLength}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, maxLength))}
+    />
+  );
+}
+
 function Field({ label, children, className, htmlFor }: { label: string; children: React.ReactNode; className?: string; htmlFor?: string }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
@@ -77,7 +93,7 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
   const [year, setYear] = useState(String(initial?.birth.year ?? ""));
   const [isLeap, setIsLeap] = useState(initial?.birth.isLeapMonth ?? false);
   const [hour, setHour] = useState(String(initial?.birth.hour ?? 12));
-  const [minute, setMinute] = useState(String(initial?.birth.minute ?? 0));
+  const [minute, setMinute] = useState(String(initial?.birth.minute ?? 30));
   const [place, setPlace] = useState(initial?.birthPlace ?? "");
   const [tz, setTz] = useState(initial?.birth.timeZone ?? 7);
   const [schoolId, setSchoolId] = useState(initial?.schoolId ?? "vn-traditional");
@@ -90,7 +106,7 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
 
   const request: ChartRequest | null = useMemo(() => {
     const d = Number(day), m = Number(month), y = Number(year), h = Number(hour), mi = Number(minute);
-    if (!day || !month || !year) return null;
+    if (!day || !month || !year || hour === "" || minute === "") return null;
     return {
       name: name.trim(),
       gender,
@@ -178,20 +194,13 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
         </div>
         <div className="grid grid-cols-3 gap-3">
           <Field label="Ngày" htmlFor="day">
-            <Input id="day" inputMode="numeric" type="number" min={1} max={31} value={day} onChange={(e) => setDay(e.target.value)} placeholder="DD" />
+            <NumberInput id="day" value={day} onChange={setDay} placeholder="DD" maxLength={2} />
           </Field>
           <Field label={calendar === "lunar" ? "Tháng (âm)" : "Tháng"} htmlFor="month">
-            <NativeSelect id="month" value={month} onChange={(e) => setMonth(e.target.value)}>
-              <option value="">Tháng</option>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  Tháng {i + 1}
-                </option>
-              ))}
-            </NativeSelect>
+            <NumberInput id="month" value={month} onChange={setMonth} placeholder="MM" maxLength={2} />
           </Field>
           <Field label="Năm" htmlFor="year">
-            <Input id="year" inputMode="numeric" type="number" min={1800} max={2199} value={year} onChange={(e) => setYear(e.target.value)} placeholder="YYYY" />
+            <NumberInput id="year" value={year} onChange={setYear} placeholder="YYYY" maxLength={4} />
           </Field>
         </div>
         {calendar === "lunar" && (
@@ -207,27 +216,17 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
         )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_2fr]">
           <Field label="Giờ" htmlFor="hour">
-            <NativeSelect id="hour" value={hour} onChange={(e) => setHour(e.target.value)}>
-              {Array.from({ length: 24 }, (_, h) => (
-                <option key={h} value={h}>
-                  {String(h).padStart(2, "0")} giờ
-                </option>
-              ))}
-            </NativeSelect>
+            <NumberInput id="hour" value={hour} onChange={setHour} placeholder="0–23" maxLength={2} />
           </Field>
           <Field label="Phút" htmlFor="minute">
-            <NativeSelect id="minute" value={minute} onChange={(e) => setMinute(e.target.value)}>
-              {Array.from({ length: 60 }, (_, m) => (
-                <option key={m} value={m}>
-                  {String(m).padStart(2, "0")}
-                </option>
-              ))}
-            </NativeSelect>
+            <NumberInput id="minute" value={minute} onChange={setMinute} placeholder="0–59" maxLength={2} />
           </Field>
           <div className="col-span-2 flex items-end sm:col-span-1">
             <div className="flex h-9 w-full items-center gap-2 rounded-lg bg-muted/60 px-3 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
-              Giờ {HOUR_RANGES[Math.floor((Number(hour) + 1) / 2) % 12].name} ({HOUR_RANGES[Math.floor((Number(hour) + 1) / 2) % 12].label})
+              {hour !== "" && Number(hour) <= 23
+                ? `Giờ ${HOUR_RANGES[Math.floor((Number(hour) + 1) / 2) % 12].name} (${HOUR_RANGES[Math.floor((Number(hour) + 1) / 2) % 12].label})`
+                : "Nhập giờ từ 0 đến 23"}
             </div>
           </div>
         </div>
@@ -378,7 +377,7 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
       </section>
 
       <div className="flex items-center justify-end gap-3">
-        {touched && !request && <span className="text-sm text-destructive">Vui lòng nhập đủ ngày, tháng, năm sinh.</span>}
+        {touched && !request && <span className="text-sm text-destructive">Vui lòng nhập đủ ngày, tháng, năm, giờ, phút sinh.</span>}
         <Button type="submit" size="lg" disabled={!!request && !preview?.ok}>
           <Sparkles /> Lập lá số
         </Button>

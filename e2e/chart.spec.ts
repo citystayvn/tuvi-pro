@@ -8,9 +8,9 @@ test("Lập lá số từ form", async ({ page }) => {
   await page.getByLabel("Họ tên").fill("Trần Thị B");
   await page.getByRole("radio", { name: "Nữ" }).click();
   await page.getByLabel("Ngày", { exact: true }).fill("10");
-  await page.getByLabel("Tháng", { exact: true }).selectOption("2");
+  await page.getByLabel("Tháng", { exact: true }).fill("2");
   await page.getByLabel("Năm", { exact: true }).fill("2024");
-  await page.getByLabel("Giờ", { exact: true }).selectOption("8");
+  await page.getByLabel("Giờ", { exact: true }).fill("8");
   await expect(page.getByText("1/1/2024")).toBeVisible(); // xem trước âm lịch: mùng 1 Tết Giáp Thìn
   await expect(page.getByText("Giáp Thìn").first()).toBeVisible();
   await page.getByRole("button", { name: "Lập lá số" }).click();
@@ -77,7 +77,7 @@ test("Ngày âm lịch tháng nhuận không hợp lệ bị từ chối", async
   await page.goto("/");
   await page.getByRole("radio", { name: "Âm lịch" }).click();
   await page.getByLabel("Ngày", { exact: true }).fill("15");
-  await page.getByLabel("Tháng (âm)").selectOption("5");
+  await page.getByLabel("Tháng (âm)").fill("5");
   await page.getByLabel("Năm", { exact: true }).fill("2020");
   await page.getByRole("switch", { name: "Tháng nhuận" }).click();
   await expect(page.getByText("không có tháng 5 nhuận")).toBeVisible();
