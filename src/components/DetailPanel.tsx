@@ -202,33 +202,36 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
         </Section>
       )}
 
-      {star.layer === "natal" && (
-        <>
-          <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} defaultText={cycle?.palaceText ?? undefined} />
-          {(() => {
-            // Sao chiếu sang cung xung chiếu và hai cung tam hợp: dùng ý nghĩa của sao theo tên các cung đó.
-            const tp = tamPhuongTuChinh(star.branch);
-            const related = [
-              { label: "Xung chiếu", b: tp.opposite },
-              { label: "Tam hợp", b: tp.trine[0] },
-              { label: "Tam hợp", b: tp.trine[1] },
-            ];
-            return related.map(({ label, b }) => {
-              const name = chart.palaces[b].name;
-              return (
-                <StarPalaceNote
-                  key={b}
-                  starId={star.id}
-                  starName={star.name}
-                  palaceName={name}
-                  title={`${label} – cung ${name} (${branchName(b)})`}
-                  defaultText={cycle?.data.palaces[name as keyof typeof cycle.data.palaces]}
-                />
-              );
-            });
-          })()}
-        </>
-      )}
+      {star.layer === "natal" &&
+        (() => {
+          const tp = tamPhuongTuChinh(star.branch);
+          const notes = [
+            { kind: "self" as const, b: star.branch },
+            { kind: "opposite" as const, b: tp.opposite },
+            { kind: "trine" as const, b: tp.trine[0] },
+            { kind: "trine" as const, b: tp.trine[1] },
+          ];
+          return (
+            <Section title="Ý nghĩa theo cung">
+              <div className="space-y-2">
+                {notes.map(({ kind, b }) => {
+                  const name = chart.palaces[b].name;
+                  return (
+                    <StarPalaceNote
+                      key={b}
+                      starId={star.id}
+                      starName={star.name}
+                      palaceName={name}
+                      branch={b}
+                      kind={kind}
+                      defaultText={cycle?.data.palaces[name as keyof typeof cycle.data.palaces]}
+                    />
+                  );
+                })}
+              </div>
+            </Section>
+          );
+        })()}
 
       {cycle && (cycle.combos.length > 0 || cycle.transformationNotes.length > 0) && (
         <Section title="Tác động của sao đồng cung, hội chiếu">
@@ -332,7 +335,28 @@ function ConvergingGroups({
 }
 
 /** Ý nghĩa của sao tại một cung: dữ liệu luận giải sẵn có (nếu có), người dùng sửa / bổ sung được. */
-function StarPalaceNote({ starId, starName, palaceName, defaultText, title }: { starId: string; starName: string; palaceName: string; defaultText?: string; title?: string }) {
+const NOTE_KIND = {
+  self: { label: "Tại cung", tag: "bg-primary text-primary-foreground", card: "border-primary/40 bg-accent/50" },
+  opposite: { label: "Xung chiếu", tag: "bg-el-hoa text-white", card: "border-el-hoa/30 bg-card" },
+  trine: { label: "Tam hợp", tag: "bg-annual text-white", card: "border-annual/30 bg-card" },
+} as const;
+
+/** Thẻ ý nghĩa của sao tại một cung: dữ liệu sẵn có (nếu có), người dùng sửa / bổ sung được. */
+function StarPalaceNote({
+  starId,
+  starName,
+  palaceName,
+  branch,
+  kind,
+  defaultText,
+}: {
+  starId: string;
+  starName: string;
+  palaceName: string;
+  branch: number;
+  kind: keyof typeof NOTE_KIND;
+  defaultText?: string;
+}) {
   const key = `${starId}@${palaceName}`;
   const note = useChartStore((s) => s.starPalaceNotes[key]);
   const setNote = useChartStore((s) => s.setStarPalaceNote);
@@ -343,30 +367,36 @@ function StarPalaceNote({ starId, starName, palaceName, defaultText, title }: { 
   useEffect(() => setEditing(false), [key]);
   const custom = mounted ? note : undefined;
   const shown = custom ?? defaultText;
-
-  const editButton = !editing && (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(shown ?? "");
-        setEditing(true);
-      }}
-      aria-label="Sửa ý nghĩa"
-      title={shown ? "Sửa ý nghĩa" : "Thêm ý nghĩa"}
-      className="rounded p-0.5 text-muted-foreground normal-case hover:bg-muted hover:text-foreground"
-    >
-      <PencilLine className="h-3.5 w-3.5" />
-    </button>
-  );
+  const k = NOTE_KIND[kind];
 
   return (
-    <Section title={title ?? `Ý nghĩa tại cung ${palaceName}`} action={editButton}>
+    <div className={cn("rounded-lg border p-2.5", k.card)}>
+      <div className="mb-1 flex items-center gap-1.5">
+        <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", k.tag)}>{k.label}</span>
+        <span className="text-sm font-semibold">{palaceName}</span>
+        <span className="text-xs text-muted-foreground">({branchName(branch)})</span>
+        {custom && defaultText && <span className="text-[10px] text-muted-foreground">· đã sửa</span>}
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(shown ?? "");
+              setEditing(true);
+            }}
+            aria-label="Sửa ý nghĩa"
+            title={shown ? "Sửa ý nghĩa" : "Thêm ý nghĩa"}
+            className="ml-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <PencilLine className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
       {editing ? (
         <div className="space-y-2">
           <textarea
             id="star-palace-note"
             aria-label={`Ý nghĩa của ${starName} tại cung ${palaceName}`}
-            className="min-h-[96px] w-full rounded-lg border border-input bg-card p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-[88px] w-full rounded-md border border-input bg-card p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={`Ví dụ: ${starName} tại ${palaceName} chủ về…`}
@@ -387,11 +417,11 @@ function StarPalaceNote({ starId, starName, palaceName, defaultText, title }: { 
           </div>
         </div>
       ) : shown ? (
-        <p className="whitespace-pre-wrap text-sm">{shown}</p>
+        <p className={cn("whitespace-pre-wrap leading-snug", kind === "self" ? "text-[15px]" : "text-sm text-foreground/85")}>{shown}</p>
       ) : (
-        <p className="text-sm text-muted-foreground">Chưa có.</p>
+        <p className="text-sm italic text-muted-foreground">Chưa có – bấm bút để thêm.</p>
       )}
-    </Section>
+    </div>
   );
 }
 
