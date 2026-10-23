@@ -11,6 +11,7 @@ import { PALACE_MEANINGS, STAR_MEANINGS } from "./meanings";
 import { CYCLE_STAR_BY_ID, CYCLE_STAR_INTERPRETATIONS, RING_LABEL, TRANSFORMATION_FOCUS, type ComboRule, type PalaceName } from "./cycle-stars";
 import { AUX_STAR_INTERPRETATIONS } from "./aux-stars";
 import { MINOR_STAR_INTERPRETATIONS } from "./aux-stars-minor";
+import { MAIN_STAR_INTERPRETATIONS } from "./main-stars";
 import { brightnessOf } from "@/core/brightness";
 
 export { PALACE_MEANINGS, STAR_MEANINGS };
@@ -178,7 +179,7 @@ export interface StarInterpretationData {
 
 const INTERPRETATION_BY_ID: Record<string, { data: StarInterpretationData; groupLabel: string }> = Object.fromEntries([
   ...CYCLE_STAR_INTERPRETATIONS.map((d) => [d.id, { data: d, groupLabel: RING_LABEL[d.ring] }]),
-  ...[...AUX_STAR_INTERPRETATIONS, ...MINOR_STAR_INTERPRETATIONS].map((d) => [d.id, { data: d, groupLabel: d.group }]),
+  ...[...MAIN_STAR_INTERPRETATIONS, ...AUX_STAR_INTERPRETATIONS, ...MINOR_STAR_INTERPRETATIONS].map((d) => [d.id, { data: d, groupLabel: d.group }]),
 ]);
 
 export interface StarReading {
@@ -220,7 +221,8 @@ export function starReading(chart: TuViChart, star: ChartStar): StarReading | nu
   const b = brightnessOf(star.id, star.branch, chart.rules.brightness.table, chart.rules.brightness.auxiliary);
   const brightnessRule = b && b !== "UNDEFINED" ? b : null;
   const positionText =
-    brightnessRule === "HAM" ? data.unfavorable ?? null : brightnessRule ? data.favorable ?? null : null;
+    brightnessRule === "HAM" ? data.unfavorable ?? null
+    : brightnessRule && brightnessRule !== "BINH" ? data.favorable ?? null : null;
   const natal = star.layer === "natal";
   return {
     data,

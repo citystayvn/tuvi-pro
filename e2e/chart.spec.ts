@@ -43,7 +43,7 @@ test("Nhấp vào sao và cung hiển thị chi tiết", async ({ page }) => {
   await page.locator('[data-palace="ngo"] [data-star="tu-vi"]').click();
   const star = page.getByTestId("star-detail");
   await expect(star).toBeVisible();
-  await expect(star).toContainText("Ý nghĩa truyền thống");
+  await expect(star).toContainText("Hợp vị trí lãnh đạo, quản lý");
   await expect(star).toContainText("Miếu");
   await page.keyboard.press("Escape");
   await page.locator('[data-palace="dan"]').click({ position: { x: 10, y: 10 } });
