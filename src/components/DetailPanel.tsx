@@ -4,7 +4,7 @@ import { Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
 import { useChartStore } from "@/store/useChartStore";
 import { Button } from "@/components/ui/button";
 import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
-import { analyzePalace, analyzeStar, cycleStarReading, type StarGroupMatch } from "@/core/interpretation";
+import { analyzePalace, analyzeStar, starReading, type StarGroupMatch } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
 import { ELEMENT_NAMES } from "@/core/elements";
@@ -120,13 +120,13 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
   const a = analyzeStar(chart, star);
   // Bộ sao (tại tam phương tứ chính của cung) có chứa chính sao này.
   const starGroups = analyzePalace(chart, star.branch).groups.filter((g) => g.stars.includes(star.id));
-  const cycle = cycleStarReading(chart, star);
+  const cycle = starReading(chart, star);
   return (
     <div className="space-y-5" data-testid="star-detail">
       <div>
         {cycle && (
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {cycle.data.name} – {cycle.ringLabel}
+            {cycle.data.name} – {cycle.groupLabel}
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
@@ -153,7 +153,7 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
         <div className="rounded-lg bg-muted/60 p-2">
           <div className="text-muted-foreground">Miếu / Vượng / Đắc / Hãm</div>
           <div className="font-semibold">
-            {star.brightness && star.brightness !== "UNDEFINED" ? BRIGHTNESS_LABEL[star.brightness] : cycle ? "Không có quy định trong hệ thống" : "Không có quy tắc"}
+            {star.brightness && star.brightness !== "UNDEFINED" ? BRIGHTNESS_LABEL[star.brightness] : "Không có quy định trong hệ thống"}
           </div>
         </div>
       </div>
@@ -186,9 +186,12 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
               </div>
             </div>
           </Section>
+          {cycle.positionText && (
+            <p className={cn("rounded-lg border-l-2 bg-muted/40 p-2 text-sm", cycle.brightnessRule === "HAM" ? "border-bad" : "border-good")}>{cycle.positionText}</p>
+          )}
           {star.layer !== "natal" && (
             <p className="rounded-lg bg-muted/60 p-2 text-xs text-muted-foreground">
-              Đây là sao {star.layer === "annual" ? `lưu niên của năm ${chart.period.viewYear}` : "đại vận"}: chỉ tác động trong thời gian vận hạn. Luận giải theo cung bên dưới dành cho sao nguyên cục.
+              Đây là sao {star.layer === "annual" ? `lưu niên của năm ${chart.period.viewYear}` : "đại vận"}: chỉ tác động trong thời gian vận hạn. Luận giải theo cung chỉ dành cho sao nguyên cục.
             </p>
           )}
         </>

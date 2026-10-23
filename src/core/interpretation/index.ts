@@ -8,7 +8,9 @@ import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
 import { branchAt } from "@/core/stems-branches";
 import { tamPhuongTuChinh } from "@/core/palaces";
 import { PALACE_MEANINGS, STAR_MEANINGS } from "./meanings";
-import { CYCLE_STAR_BY_ID, RING_LABEL, TRANSFORMATION_FOCUS, type ComboRule, type CycleStarInterpretation, type PalaceName } from "./cycle-stars";
+import { CYCLE_STAR_BY_ID, CYCLE_STAR_INTERPRETATIONS, RING_LABEL, TRANSFORMATION_FOCUS, type ComboRule, type PalaceName } from "./cycle-stars";
+import { AUX_STAR_INTERPRETATIONS } from "./aux-stars";
+import { MINOR_STAR_INTERPRETATIONS } from "./aux-stars-minor";
 import { brightnessOf } from "@/core/brightness";
 
 export { PALACE_MEANINGS, STAR_MEANINGS };
@@ -160,23 +162,48 @@ export function chartOverview(chart: TuViChart): { title: string; body: string }
   return items;
 }
 
-// ---------------- Vòng Thái Tuế / Bác Sĩ ----------------
+// ---------------- Luận giải phụ tinh (vòng Thái Tuế, Bác Sĩ, cát/sát tinh, Tứ Hóa, sao nhỏ) ----------------
 
-export interface CycleStarReading {
-  data: CycleStarInterpretation;
-  ringLabel: string;
+export interface StarInterpretationData {
+  id: string;
+  name: string;
+  core: string;
+  positive: string;
+  negative: string;
+  palaces: Partial<Record<PalaceName, string>>;
+  favorable?: string;
+  unfavorable?: string;
+  combos: ComboRule[];
+}
+
+const INTERPRETATION_BY_ID: Record<string, { data: StarInterpretationData; groupLabel: string }> = Object.fromEntries([
+  ...CYCLE_STAR_INTERPRETATIONS.map((d) => [d.id, { data: d, groupLabel: RING_LABEL[d.ring] }]),
+  ...[...AUX_STAR_INTERPRETATIONS, ...MINOR_STAR_INTERPRETATIONS].map((d) => [d.id, { data: d, groupLabel: d.group }]),
+]);
+
+export interface StarReading {
+  data: StarInterpretationData;
+  groupLabel: string;
   /** Ý nghĩa tại cung đang xét – chỉ có với sao nguyên cục. */
   palaceText: string | null;
   palaceName: string;
   /** Trạng thái Miếu/Hãm theo hệ thống đang dùng; null nếu không có quy định. */
   brightnessRule: string | null;
+  /** Ý nghĩa theo vị trí đắc / hãm (chỉ khi có bảng tra). */
+  positionText: string | null;
   combos: (ComboRule & { matched: string[] })[];
   transformationNotes: string[];
 }
 
-export function cycleStarReading(chart: TuViChart, star: ChartStar): CycleStarReading | null {
-  const data = CYCLE_STAR_BY_ID[star.id];
-  if (!data) return null;
+/** Đã có cơ sở dữ liệu luận giải cho sao này chưa. */
+export function hasStarInterpretation(id: string): boolean {
+  return id in INTERPRETATION_BY_ID;
+}
+
+export function starReading(chart: TuViChart, star: ChartStar): StarReading | null {
+  const entry = INTERPRETATION_BY_ID[star.id];
+  if (!entry) return null;
+  const { data, groupLabel } = entry;
   const palace = chart.palaces[star.branch];
   const t = tamPhuongTuChinh(star.branch);
   const natalAt = (b: BranchIndex) => chart.palaces[b].stars.filter((s) => s.layer === "natal" && s !== star).map((s) => s.id);
@@ -185,19 +212,30 @@ export function cycleStarReading(chart: TuViChart, star: ChartStar): CycleStarRe
   const combos = data.combos
     .map((c) => ({ ...c, matched: c.with.filter((id) => (c.scope === "dong-cung" ? same : tamPhuong).has(id)) }))
     .filter((c) => c.matched.length > 0);
-  // Ghi chú Tứ Hóa chung, trừ khi một tổ hợp riêng đã nói về chính sao Hóa đó.
+  // Ghi chú Tứ Hóa chung (không áp dụng cho chính sao Hóa), trừ khi tổ hợp riêng đã nói về sao Hóa đó.
   const covered = new Set(combos.flatMap((c) => c.matched));
-  const transformationNotes = Object.keys(TRANSFORMATION_FOCUS)
+  const transformationNotes = star.category === "transformation" ? [] : Object.keys(TRANSFORMATION_FOCUS)
     .filter((id) => same.has(id) && !covered.has(id))
     .map((id) => TRANSFORMATION_FOCUS[id]);
   const b = brightnessOf(star.id, star.branch, chart.rules.brightness.table, chart.rules.brightness.auxiliary);
+  const brightnessRule = b && b !== "UNDEFINED" ? b : null;
+  const positionText =
+    brightnessRule === "HAM" ? data.unfavorable ?? null : brightnessRule ? data.favorable ?? null : null;
+  const natal = star.layer === "natal";
   return {
     data,
-    ringLabel: RING_LABEL[data.ring],
-    palaceText: star.layer === "natal" ? data.palaces[palace.name as PalaceName] : null,
+    groupLabel,
+    palaceText: natal ? data.palaces[palace.name as PalaceName] ?? null : null,
     palaceName: palace.name,
-    brightnessRule: b && b !== "UNDEFINED" ? b : null,
-    combos,
-    transformationNotes: star.layer === "natal" ? transformationNotes : [],
+    brightnessRule,
+    positionText: natal ? positionText : null,
+    combos: natal ? combos : [],
+    transformationNotes: natal ? transformationNotes : [],
   };
+}
+
+/** Giữ tên cũ cho vòng Thái Tuế / Bác Sĩ. */
+export function cycleStarReading(chart: TuViChart, star: ChartStar) {
+  const r = starReading(chart, star);
+  return r && CYCLE_STAR_BY_ID[star.id] ? { ...r, ringLabel: r.groupLabel } : null;
 }
