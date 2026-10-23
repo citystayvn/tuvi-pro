@@ -9,6 +9,7 @@ export default {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"],
+        chart: ["var(--font-chart)", "var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -31,6 +32,9 @@ export default {
           hoa: "hsl(var(--el-hoa))",
           tho: "hsl(var(--el-tho))",
         },
+        paper: "hsl(var(--chart-paper))",
+        "paper-center": "hsl(var(--chart-center))",
+        ink: "hsl(var(--chart-ink))",
         good: "hsl(var(--good))",
         bad: "hsl(var(--bad))",
         annual: "hsl(var(--annual))",

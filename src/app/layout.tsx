@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
 const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-sans", display: "swap" });
+// Kiểu chữ hẹp cho lá số – chứa được nhiều tên sao trong mỗi cung.
+const chartFont = Roboto_Condensed({ subsets: ["latin", "vietnamese"], weight: ["400", "500", "600", "700"], variable: "--font-chart", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "Tử Vi Pro – Lập lá số Tử Vi Đẩu Số", template: "%s · Tử Vi Pro" },
@@ -20,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.variable} font-sans`}>
+      <body className={`${inter.variable} ${chartFont.variable} font-sans`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

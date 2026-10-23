@@ -34,8 +34,8 @@ const js = readFileSync(`${out}/app.js`, "utf8").replace(/<\/script/gi, "<\\/scr
 const html = `<title>Tử Vi Pro</title>
 <meta name="description" content="Lập lá số Tử Vi Đẩu Số">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<style>:root{--font-sans:"Inter"}html,body{height:100%}${css}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Condensed:wght@400;500;600;700&display=swap">
+<style>:root{--font-sans:"Inter";--font-chart:"Roboto Condensed"}html,body{height:100%}${css}</style>
 <div id="root"></div>
 <script>${js}</script>
 `;

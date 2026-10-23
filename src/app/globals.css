@@ -26,11 +26,15 @@
     --radius: 0.75rem;
     --sidebar: 0 0% 100%;
 
-    --el-kim: 220 9% 46%;
-    --el-moc: 142 64% 32%;
-    --el-thuy: 221 70% 38%;
-    --el-hoa: 0 72% 48%;
-    --el-tho: 28 80% 40%;
+    --el-kim: 0 0% 52%;
+    --el-moc: 134 70% 32%;
+    --el-thuy: 0 0% 8%;
+    --el-hoa: 358 85% 47%;
+    --el-tho: 36 95% 45%;
+    /* Lá số: nền giấy, viền mực */
+    --chart-paper: 40 33% 93%;
+    --chart-center: 40 40% 96%;
+    --chart-ink: 30 10% 12%;
     --good: 160 70% 30%;
     --bad: 350 70% 45%;
     --annual: 271 60% 50%;
@@ -58,11 +62,14 @@
     --ring: 248 80% 68%;
     --sidebar: 240 8% 9%;
 
-    --el-kim: 220 9% 70%;
-    --el-moc: 142 55% 55%;
-    --el-thuy: 213 90% 70%;
-    --el-hoa: 0 85% 66%;
-    --el-tho: 33 85% 60%;
+    --el-kim: 0 0% 68%;
+    --el-moc: 134 55% 55%;
+    --el-thuy: 0 0% 92%;
+    --el-hoa: 358 85% 66%;
+    --el-tho: 38 90% 58%;
+    --chart-paper: 35 12% 12%;
+    --chart-center: 35 12% 15%;
+    --chart-ink: 40 20% 80%;
     --good: 158 60% 55%;
     --bad: 350 85% 68%;
     --annual: 271 80% 75%;

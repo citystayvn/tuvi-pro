@@ -23,13 +23,15 @@ const TRANSFORMATION_TEXT: Record<string, string> = {
   "hoa-ky": "text-zinc-700 dark:text-zinc-300 font-semibold",
 };
 
+/** Màu sao theo Ngũ hành (cách tô lá số truyền thống); sao Tứ Hóa giữ màu riêng. */
 export function starTextClass(s: ChartStar): string {
-  if (s.layer === "annual") return "text-annual";
-  if (s.layer === "decadal") return "text-decadal";
-  if (s.category === "main") return s.element ? ELEMENT_TEXT[s.element] : "";
   if (s.category === "transformation") return TRANSFORMATION_TEXT[s.id] ?? "";
-  return s.nature === "good" ? "text-good" : s.nature === "bad" ? "text-bad" : "text-muted-foreground";
+  if (s.element) return ELEMENT_TEXT[s.element];
+  return "text-foreground";
 }
+
+/** Tên rút gọn của 12 cung dùng cho nhãn ĐV./LN. */
+export const PALACE_SHORT = ["MỆNH", "HUYNH", "PHỐI", "TỬ", "TÀI", "TẬT", "DI", "NÔ", "QUAN", "ĐIỀN", "PHÚC", "PHỤ"];
 
 /**
  * Vị trí của 12 địa chi trên lưới 4×4 (bố cục lá số truyền thống, cố định):

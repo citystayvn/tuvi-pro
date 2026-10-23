@@ -16,7 +16,7 @@ export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolba
   const b = chart.birth;
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div data-center className="flex h-full flex-col overflow-hidden bg-gradient-to-br from-card via-card to-accent/40 px-4 py-3 text-[length:calc(11.5px*var(--k,1))] leading-snug">
+    <div data-center className="flex h-full flex-col overflow-hidden bg-paper-center px-4 py-3 text-[length:calc(11.5px*var(--k,1))] leading-snug">
       {toolbar && (
         <div className="no-print mb-2" data-export-hide="1">
           {toolbar}
