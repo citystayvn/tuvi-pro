@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Danh mục sao" };
 export default function RegistryPage() {
   return (
     <div>
-      <PageHeader title="Star Registry – Danh mục sao" description="Toàn bộ sao được hỗ trợ: quy tắc an sao, dữ liệu đầu vào, nguồn tham chiếu, trạng thái triển khai và mức kiểm chứng." />
+      <PageHeader title="Danh mục sao" description="Các sao được hỗ trợ: nhóm sao, ngũ hành, dữ liệu đầu vào và cách an sao." />
       <div className="p-4 md:p-8">
         <RegistryTable />
       </div>

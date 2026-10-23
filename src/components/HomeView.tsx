@@ -2,13 +2,12 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, FlaskConical, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { PageHeader } from "./AppShell";
 import { BirthForm } from "./BirthForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { useChartStore } from "@/store/useChartStore";
 import { requestToSearchParams, searchParamsToRequest } from "@/utils/chart-url";
-import report from "@/config/accuracy-report.json";
 
 export function HomeView() {
   const params = useSearchParams();
@@ -16,7 +15,6 @@ export function HomeView() {
   const saved = useChartStore((s) => s.saved);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const r = report as { generatedAt: string | null; totals: { passed: number; failed: number; total: number }; engines: { name: string; status: string }[] };
 
   return (
     <div>
@@ -54,28 +52,6 @@ export function HomeView() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary" /> Độ chính xác thuật toán
-              </CardTitle>
-              <CardDescription>{r.generatedAt ? `${r.totals.passed}/${r.totals.total} kiểm thử đạt` : "Chưa có báo cáo"}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-1.5">
-              {r.engines.map((e) => (
-                <div key={e.name} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{e.name}</span>
-                  <span className={e.status === "PASS" ? "flex items-center gap-1 font-semibold text-emerald-600" : "font-semibold text-destructive"}>
-                    {e.status === "PASS" && <CheckCircle2 className="h-3.5 w-3.5" />}
-                    {e.status}
-                  </span>
-                </div>
-              ))}
-              <Link href="/accuracy" className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                <FlaskConical className="h-3.5 w-3.5" /> Xem báo cáo chi tiết
-              </Link>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

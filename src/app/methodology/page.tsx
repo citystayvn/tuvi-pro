@@ -35,20 +35,11 @@ const SECTIONS: { title: string; items: string[] }[] = [
     ],
   },
   {
-    title: "Kiểm thử",
-    items: [
-      "Unit test cho từng module; reference test với dữ liệu lịch sử / thiên văn / bảng tra truyền thống nhập tay.",
-      "Đối chiếu chéo 240 lá số với một triển khai độc lập (lasotuvi). Khi cấu hình engine theo đúng lựa chọn trường phái của lasotuvi, mọi vị trí sao khớp – trừ Thai/Dưỡng là lỗi đã xác định của lasotuvi.",
-      "Lệnh: npm test · npm run test:report (báo cáo PASS/FAIL theo engine) · npm run test:e2e (Playwright).",
-    ],
-  },
-  {
     title: "Giới hạn hiện tại",
     items: [
       "Chưa hiệu chỉnh giờ Mặt Trời thực theo kinh độ nơi sinh và chưa xử lý giờ mùa hè (DST) tự động – người dùng chọn múi giờ chuẩn.",
       "Chưa triển khai: lưu đại hạn, lưu nguyệt, lưu nhật; một số sao hiếm (Thiên Vu, Thiên Nguyệt, Âm Sát).",
       "Trung Châu phái và Bắc phái mới ở mức thử nghiệm (chỉ tham số hoá các khác biệt đã xác định).",
-      "Chưa đối chiếu với lá số giấy do chuyên gia lập – đây là bước kiểm chứng độc lập tiếp theo cần làm.",
     ],
   },
 ];

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookOpen, FlaskConical, LayoutGrid, Menu, Moon, PenLine, Star, Sun, Bookmark, X } from "lucide-react";
+import { BookOpen, LayoutGrid, Menu, Moon, PenLine, Star, Sun, Bookmark, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 const NAV = [
@@ -10,7 +10,6 @@ const NAV = [
   { href: "/laso", label: "Lá số", icon: LayoutGrid },
   { href: "/saved", label: "Đã lưu", icon: Bookmark },
   { href: "/registry", label: "Danh mục sao", icon: Star },
-  { href: "/accuracy", label: "Độ chính xác", icon: FlaskConical },
   { href: "/methodology", label: "Phương pháp", icon: BookOpen },
 ];
 
@@ -83,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mt-auto space-y-2">
           <ThemeToggle />
           <div className="rounded-lg border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
-            Engine v0.1 · Thuật toán có kiểm thử. Nội dung luận giải chỉ mang tính tham khảo.
+            Nội dung luận giải chỉ mang tính tham khảo.
           </div>
         </div>
       </aside>

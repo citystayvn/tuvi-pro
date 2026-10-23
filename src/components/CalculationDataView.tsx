@@ -6,8 +6,6 @@ import { getStarDef } from "@/config/stars/registry";
 import { TRANSFORMATION_NAMES } from "@/core/transformations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { VERIFICATION_BADGE } from "./DetailPanel";
 
 function KV({ k, v }: { k: string; v: React.ReactNode }) {
   return (
@@ -67,8 +65,7 @@ export function CalculationDataView({ chart }: { chart: TuViChart }) {
             <KV k="Cục" v={`${chart.cuc.name} (Mệnh ${canChiName(chart.palaces[chart.menhBranch].stem, chart.menhBranch)} – ${chart.cuc.napAmName})`} />
             <KV k="Bản Mệnh" v={chart.banMenh.name} />
             <KV k="Âm Dương / chiều" v={`${chart.yinYangGender} / ${chart.direction === 1 ? "thuận" : "nghịch"}`} />
-            <KV k="Engine" v={`v${chart.engineVersion}`} />
-            <pre className="mt-3 max-h-64 overflow-auto rounded-lg bg-muted p-3 text-[11px] leading-relaxed">{JSON.stringify(chart.rules, null, 2)}</pre>
+                        <pre className="mt-3 max-h-64 overflow-auto rounded-lg bg-muted p-3 text-[11px] leading-relaxed">{JSON.stringify(chart.rules, null, 2)}</pre>
           </CardContent>
         </Card>
       </div>
@@ -76,23 +73,20 @@ export function CalculationDataView({ chart }: { chart: TuViChart }) {
       <Card>
         <CardHeader>
           <CardTitle>Bảng vị trí sao ({stars.length})</CardTitle>
-          <CardDescription>Mỗi sao kèm mã quy tắc an sao (sourceRuleId) và mức kiểm chứng trong Star Registry.</CardDescription>
+          <CardDescription>Vị trí của từng sao theo lớp nguyên cục, đại vận và lưu niên.</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[480px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="py-2 pr-3 font-medium">Sao</th>
                 <th className="py-2 pr-3 font-medium">Lớp</th>
                 <th className="py-2 pr-3 font-medium">Cung</th>
                 <th className="py-2 pr-3 font-medium">Trạng thái</th>
-                <th className="py-2 pr-3 font-medium">Quy tắc</th>
-                <th className="py-2 font-medium">Kiểm chứng</th>
               </tr>
             </thead>
             <tbody>
               {stars.map((s, i) => {
-                const v = VERIFICATION_BADGE[getStarDef(s.id).verification];
                 return (
                   <tr key={i} className="border-b last:border-0">
                     <td className="py-1.5 pr-3 font-medium">{s.displayName}</td>
@@ -101,12 +95,6 @@ export function CalculationDataView({ chart }: { chart: TuViChart }) {
                       {s.palaceName} ({branchName(s.branch)})
                     </td>
                     <td className="py-1.5 pr-3 text-xs">{s.brightness ?? ""}</td>
-                    <td className="py-1.5 pr-3">
-                      <code className="text-[11px]">{s.sourceRuleId}</code>
-                    </td>
-                    <td className="py-1.5">
-                      <Badge variant={v.variant}>{v.label}</Badge>
-                    </td>
                   </tr>
                 );
               })}

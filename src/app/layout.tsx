@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-sans",
 
 export const metadata: Metadata = {
   title: { default: "Tử Vi Pro – Lập lá số Tử Vi Đẩu Số", template: "%s · Tử Vi Pro" },
-  description: "Lập lá số Tử Vi Đẩu Số với thuật toán an sao minh bạch, có kiểm thử và cấu hình theo trường phái.",
+  description: "Lập lá số Tử Vi Đẩu Số theo trường phái Tử Vi Việt Nam.",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };

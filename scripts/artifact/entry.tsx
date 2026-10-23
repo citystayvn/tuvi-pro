@@ -5,7 +5,6 @@ import HomePage from "@/app/page";
 import LaSoPage from "@/app/laso/page";
 import SavedPage from "@/app/saved/page";
 import RegistryPage from "@/app/registry/page";
-import AccuracyPage from "@/app/accuracy/page";
 import MethodologyPage from "@/app/methodology/page";
 import { usePathname } from "./next-navigation";
 
@@ -14,7 +13,6 @@ const ROUTES: Record<string, () => React.ReactElement> = {
   "/laso": LaSoPage,
   "/saved": SavedPage,
   "/registry": RegistryPage,
-  "/accuracy": AccuracyPage,
   "/methodology": MethodologyPage,
 };
 

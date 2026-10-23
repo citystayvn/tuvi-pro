@@ -24,13 +24,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 const LAYER_LABEL = { natal: "Nguyên cục", decadal: "Đại vận", annual: "Lưu niên" } as const;
 
-export const VERIFICATION_BADGE: Record<string, { label: string; variant: "success" | "info" | "warning" | "secondary" }> = {
-  "reference-verified": { label: "Đã đối chiếu bảng tham chiếu", variant: "success" },
-  "cross-checked": { label: "Đã đối chiếu chéo", variant: "info" },
-  "rule-tested": { label: "Có unit test, chưa đối chiếu", variant: "secondary" },
-  conflicting: { label: "Nguồn mâu thuẫn – tuỳ chọn", variant: "warning" },
-};
-
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="space-y-2">

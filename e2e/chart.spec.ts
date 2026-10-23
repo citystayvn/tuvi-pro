@@ -84,11 +84,9 @@ test("Ngày âm lịch tháng nhuận không hợp lệ bị từ chối", async
   await expect(page.getByRole("button", { name: "Lập lá số" })).toBeDisabled();
 });
 
-test("Trang danh mục sao và báo cáo độ chính xác", async ({ page }) => {
+test("Trang danh mục sao", async ({ page }) => {
   await page.goto("/registry");
   await expect(page.getByRole("cell", { name: /Tử Vi/ }).first()).toBeVisible();
-  await page.goto("/accuracy");
-  await expect(page.getByText("Calendar Engine").first()).toBeVisible();
 });
 
 test("Xuất PNG và PDF", async ({ page }) => {
