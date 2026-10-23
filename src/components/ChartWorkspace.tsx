@@ -23,6 +23,8 @@ import { InterpretationView } from "./InterpretationView";
 import { CalculationDataView } from "./CalculationDataView";
 import { BirthForm } from "./BirthForm";
 
+/** Bản đóng gói chạy trong Claude: khung xem chặn in, tải file và liên kết trang. */
+const IS_ARTIFACT = process.env.NEXT_PUBLIC_ARTIFACT === "1";
 const BASE_WIDTH = 920;
 const BASE_HEIGHT = 945;
 const MIN_WIDTH = 860;
@@ -230,7 +232,7 @@ export function ChartWorkspace() {
     ) : null;
 
   const actions = (
-    <div className="grid grid-cols-6 gap-1 xl:grid-cols-3">
+    <div className={cn("grid gap-1", IS_ARTIFACT ? "grid-cols-2" : "grid-cols-6 xl:grid-cols-3")}>
       <Button variant="outline" size="sm" asChild title="Sửa thông tin">
         <Link href={`/?${requestToSearchParams(request).toString()}`} aria-label="Sửa">
           <Pencil /> <span className="hidden sm:inline">Sửa</span>
@@ -239,6 +241,8 @@ export function ChartWorkspace() {
       <Button variant="outline" size="sm" onClick={save} aria-label="Lưu" title="Lưu lá số">
         <Bookmark /> <span className="hidden sm:inline">Lưu</span>
       </Button>
+      {!IS_ARTIFACT && (
+        <>
       <Button variant="outline" size="sm" onClick={copyLink} aria-label="Chia sẻ" title="Sao chép liên kết">
         <Link2 /> <span className="hidden sm:inline">Chia sẻ</span>
       </Button>
@@ -251,6 +255,8 @@ export function ChartWorkspace() {
       <Button size="sm" onClick={() => window.print()} aria-label="In" title="In lá số">
         <Printer /> <span className="hidden sm:inline">In</span>
       </Button>
+        </>
+      )}
     </div>
   );
 

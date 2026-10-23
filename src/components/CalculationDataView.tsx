@@ -31,7 +31,7 @@ export function CalculationDataView({ chart }: { chart: TuViChart }) {
   };
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className={process.env.NEXT_PUBLIC_ARTIFACT === "1" ? "hidden" : "flex justify-end"}>
         <Button variant="outline" size="sm" onClick={download}>
           <Download /> Tải JSON lá số
         </Button>
