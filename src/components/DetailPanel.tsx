@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ArrowLeftRight, Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
 import { useChartStore } from "@/store/useChartStore";
 import { Button } from "@/components/ui/button";
-import type { ChartStar, TuViChart } from "@/types/chart";
+import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
 import { analyzePalace, analyzeStar } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
@@ -56,7 +56,6 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
   const a = analyzePalace(chart, branch);
   const p = a.palace;
 
-  const byLayer = (layer: ChartStar["layer"]) => p.stars.filter((s) => s.layer === layer && s.category !== "trang-sinh-cycle");
   return (
     <div className="space-y-5" data-testid="palace-detail">
       <div>
@@ -98,21 +97,8 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
         )}
       </Section>
 
-      <Section title="Danh sách sao" icon={<Layers className="h-3.5 w-3.5" />}>
-        <div className="space-y-2">
-          {(["natal", "decadal", "annual"] as const).map((layer) =>
-            byLayer(layer).length ? (
-              <div key={layer}>
-                <div className="mb-1 text-[11px] font-medium text-muted-foreground">{LAYER_LABEL[layer]}</div>
-                <StarChips stars={byLayer(layer)} onSelectStar={onSelectStar} />
-              </div>
-            ) : null,
-          )}
-        </div>
-      </Section>
-
-      <Section title="Sao hội chiếu" icon={<ArrowLeftRight className="h-3.5 w-3.5" />}>
-        <ConvergingGroups chart={chart} branch={branch} onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
+      <Section title="Sao bản cung & hội chiếu" icon={<Layers className="h-3.5 w-3.5" />}>
+        <ConvergingGroups chart={chart} branch={branch} selfLabel="Bản cung" onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
       </Section>
 
       <Section title="Bộ sao liên quan">
@@ -191,29 +177,54 @@ export function StarDetail({ chart, star, onSelectStar, onSelectPalace }: { char
 
       <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} />
 
-      <Section title="Đồng cung">
-        <StarChips stars={a.together.filter((s) => !s.category.endsWith("-cycle"))} onSelectStar={onSelectStar} />
-      </Section>
-      <Section title="Sao hội chiếu" icon={<ArrowLeftRight className="h-3.5 w-3.5" />}>
-        <ConvergingGroups chart={chart} branch={star.branch} onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
+      <Section title="Sao đồng cung & hội chiếu" icon={<ArrowLeftRight className="h-3.5 w-3.5" />}>
+        <ConvergingGroups chart={chart} branch={star.branch} selfLabel="Đồng cung" excludeStar={star} onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
       </Section>
     </div>
   );
 }
 
-/** Sao hội chiếu chia theo tam hợp, xung chiếu, giáp cung; mỗi mục hai hàng Tốt / Xấu. */
-function ConvergingGroups({ chart, branch, onSelectStar, onSelectPalace }: { chart: TuViChart; branch: number; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
+/** Sao bản cung (đồng cung) và sao hội chiếu chia theo tam hợp, xung chiếu, giáp cung; mỗi mục hàng Tốt / Xấu. */
+function ConvergingGroups({
+  chart,
+  branch,
+  selfLabel,
+  excludeStar,
+  onSelectStar,
+  onSelectPalace,
+}: {
+  chart: TuViChart;
+  branch: number;
+  selfLabel?: string;
+  excludeStar?: ChartStar;
+  onSelectStar: (s: ChartStar) => void;
+  onSelectPalace: (b: number) => void;
+}) {
   const a = analyzePalace(chart, branch);
+  const groups: { label: string; palaces: ChartPalace[]; self?: boolean }[] = [
+    ...(selfLabel ? [{ label: selfLabel, palaces: [a.palace], self: true }] : []),
+    { label: "Tam hợp", palaces: a.trine },
+    { label: "Xung chiếu", palaces: [a.opposite] },
+    { label: "Giáp cung", palaces: a.flanking },
+  ];
   return (
     <div className="space-y-3">
-      {[
-        { label: "Tam hợp", palaces: a.trine },
-        { label: "Xung chiếu", palaces: [a.opposite] },
-        { label: "Giáp cung", palaces: a.flanking },
-      ].map((grp) => {
-        const stars = grp.palaces.flatMap((pl) => pl.stars.filter((st) => st.layer === "natal" && !st.category.endsWith("-cycle")));
-        const bad = stars.filter((st) => st.nature === "bad" || st.id === "hoa-ky");
-        const good = stars.filter((st) => !bad.includes(st));
+      {groups.map((grp) => {
+        const all = grp.palaces.flatMap((pl) => pl.stars).filter((st) => st !== excludeStar && st.category !== "trang-sinh-cycle");
+        // Bản cung giữ cả sao vòng Thái Tuế / Bác Sĩ; các mục hội chiếu chỉ xét sao chính và phụ tinh.
+        const natal = all.filter((st) => st.layer === "natal" && (grp.self || !st.category.endsWith("-cycle")));
+        const bad = natal.filter((st) => st.nature === "bad" || st.id === "hoa-ky");
+        const good = natal.filter((st) => !bad.includes(st));
+        const rows: { label: string; cls: string; stars: ChartStar[] }[] = [
+          { label: "Tốt", cls: "text-good", stars: good },
+          { label: "Xấu", cls: "text-bad", stars: bad },
+        ];
+        if (grp.self) {
+          const decadal = all.filter((st) => st.layer === "decadal");
+          const annual = all.filter((st) => st.layer === "annual");
+          if (decadal.length) rows.push({ label: "Đại vận", cls: "text-decadal", stars: decadal });
+          if (annual.length) rows.push({ label: "Lưu niên", cls: "text-annual", stars: annual });
+        }
         return (
           <div key={grp.label} className="rounded-lg border p-2">
             <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-xs">
@@ -224,11 +235,13 @@ function ConvergingGroups({ chart, branch, onSelectStar, onSelectPalace }: { cha
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-[40px_1fr] items-start gap-x-2 gap-y-1.5">
-              <span className="pt-0.5 text-[11px] font-medium text-good">Tốt</span>
-              <StarChips stars={good} onSelectStar={onSelectStar} />
-              <span className="pt-0.5 text-[11px] font-medium text-bad">Xấu</span>
-              <StarChips stars={bad} onSelectStar={onSelectStar} />
+            <div className="grid grid-cols-[52px_1fr] items-start gap-x-2 gap-y-1.5">
+              {rows.map((r) => (
+                <Fragment key={r.label}>
+                  <span className={cn("pt-0.5 text-[11px] font-medium", r.cls)}>{r.label}</span>
+                  <StarChips stars={r.stars} onSelectStar={onSelectStar} />
+                </Fragment>
+              ))}
             </div>
           </div>
         );
