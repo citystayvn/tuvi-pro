@@ -16,7 +16,7 @@ export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolba
   const b = chart.birth;
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div className="flex h-full flex-col bg-gradient-to-br from-card via-card to-accent/40 px-4 py-3 text-[11.5px] leading-snug">
+    <div data-center className="flex h-full flex-col overflow-hidden bg-gradient-to-br from-card via-card to-accent/40 px-4 py-3 text-[length:calc(11.5px*var(--k,1))] leading-snug">
       {toolbar && (
         <div className="no-print mb-2" data-export-hide="1">
           {toolbar}
@@ -24,9 +24,9 @@ export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolba
       )}
       <div className="my-auto">
       <div className="mb-2 text-center">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>
-        <div className="mt-0.5 truncate font-serif text-lg font-bold text-foreground">{chart.input.name || "Không tên"}</div>
-        <div className="text-[11px] text-muted-foreground">
+        <div className="text-[length:calc(10px*var(--k,1))] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>
+        <div className="mt-0.5 truncate font-serif text-[length:calc(18px*var(--k,1))] font-bold text-foreground">{chart.input.name || "Không tên"}</div>
+        <div className="text-[length:calc(11px*var(--k,1))] text-muted-foreground">
           {chart.yinYangGender} · {SCHOOLS[chart.input.schoolId]?.config.schoolName}
         </div>
       </div>

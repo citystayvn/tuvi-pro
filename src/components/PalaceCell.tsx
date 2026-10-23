@@ -62,29 +62,29 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
       )}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-1 text-[10px] leading-none">
+      <div className="flex items-start justify-between gap-1 text-[length:calc(10px*var(--k,1))] leading-none">
         <span className="font-medium text-muted-foreground">{canChiName(palace.stem, palace.branch)}</span>
         <span className="tabular-nums font-semibold text-muted-foreground">{palace.majorPeriod.startAge}</span>
       </div>
       <div className="mt-0.5 flex items-center justify-center gap-1">
-        <span className={cn("truncate text-[12px] font-bold uppercase tracking-wider", palace.isMenh ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
+        <span className={cn("truncate text-[length:calc(12px*var(--k,1))] font-bold uppercase tracking-wider", palace.isMenh ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
           {palace.name}
         </span>
-        {palace.isThan && <span className="rounded bg-primary px-1 text-[9px] font-bold leading-[14px] text-primary-foreground" title="Cung Thân">THÂN</span>}
+        {palace.isThan && <span className="rounded bg-primary px-1 text-[length:calc(9px*var(--k,1))] font-bold leading-[calc(14px*var(--k,1))] text-primary-foreground" title="Cung Thân">THÂN</span>}
       </div>
 
       {(isMajor || isMinor || isAnnual) && (
         <div className="mt-0.5 flex justify-center gap-0.5">
-          {isMajor && <span className="rounded bg-decadal/15 px-1 text-[9px] font-bold leading-[13px] text-decadal">Đại hạn</span>}
-          {isMinor && <span className="rounded bg-emerald-600/15 px-1 text-[9px] font-bold leading-[13px] text-emerald-700 dark:text-emerald-400">Tiểu hạn</span>}
-          {isAnnual && <span className="rounded bg-annual/15 px-1 text-[9px] font-bold leading-[13px] text-annual">Lưu niên</span>}
+          {isMajor && <span className="rounded bg-decadal/15 px-1 text-[length:calc(9px*var(--k,1))] font-bold leading-[calc(13px*var(--k,1))] text-decadal">Đại hạn</span>}
+          {isMinor && <span className="rounded bg-emerald-600/15 px-1 text-[length:calc(9px*var(--k,1))] font-bold leading-[calc(13px*var(--k,1))] text-emerald-700 dark:text-emerald-400">Tiểu hạn</span>}
+          {isAnnual && <span className="rounded bg-annual/15 px-1 text-[length:calc(9px*var(--k,1))] font-bold leading-[calc(13px*var(--k,1))] text-annual">Lưu niên</span>}
         </div>
       )}
 
       {/* Chính tinh */}
       <div className="mt-0.5 flex min-h-[16px] flex-col items-center">
         {main.length === 0 ? (
-          <span className="text-[10px] italic text-muted-foreground/70">Vô chính diệu</span>
+          <span className="text-[length:calc(10px*var(--k,1))] italic text-muted-foreground/70">Vô chính diệu</span>
         ) : (
           main.map((s) => <StarItem key={s.id} star={s} size="main" selected={selectedStarId === s.id} {...starProps} />)
         )}
@@ -104,6 +104,13 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
         </div>
       </div>
 
+      {showCycles && (bacSi || thaiTue) && (
+        <div className="flex items-center justify-between gap-1">
+          {bacSi ? <StarItem star={bacSi} selected={selectedStarId === bacSi.id} {...starProps} /> : <span />}
+          {thaiTue ? <StarItem star={thaiTue} selected={selectedStarId === thaiTue.id} {...starProps} /> : <span />}
+        </div>
+      )}
+
       {/* Sao lưu / đại vận */}
       {layered.length > 0 && (
         <div className="mt-0.5 flex flex-wrap gap-x-1 border-t border-dashed pt-0.5">
@@ -113,15 +120,8 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
         </div>
       )}
 
-      {showCycles && (bacSi || thaiTue) && (
-        <div className="flex items-center justify-between gap-1">
-          {bacSi ? <StarItem star={bacSi} selected={selectedStarId === bacSi.id} {...starProps} /> : <span />}
-          {thaiTue ? <StarItem star={thaiTue} selected={selectedStarId === thaiTue.id} {...starProps} /> : <span />}
-        </div>
-      )}
-
       {/* Footer */}
-      <div className="mt-0.5 flex items-end justify-between gap-1 text-[10px] leading-none">
+      <div className="mt-0.5 flex items-end justify-between gap-1 text-[length:calc(10px*var(--k,1))] leading-none">
         <span className="text-muted-foreground">{display.showTrangSinh ? palace.trangSinh : ""}</span>
         <span className="flex items-center gap-0.5">
           {palace.hasTuan && <span className="rounded bg-zinc-200 px-1 font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">Tuần</span>}

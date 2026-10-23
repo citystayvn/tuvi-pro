@@ -3,22 +3,21 @@ import { expect, test } from "@playwright/test";
 // 15/8/1990 10:30 Hà Nội, Nam – Mệnh tại Dần (Vũ Khúc, Thiên Tướng), Thổ Ngũ Cục.
 const CHART_URL = "/laso?n=Nguyen+Van+A&g=m&c=s&d=1990-8-15&t=10:30&tz=7&p=H%C3%A0+N%E1%BB%99i&vy=2026";
 
-test("Lập lá số từ form", async ({ page }) => {
+test("Mở trang là có lá số mặc định, sửa và lập lại", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("Họ tên").fill("Trần Thị B");
-  await page.getByRole("radio", { name: "Nữ" }).click();
-  await page.getByLabel("Ngày", { exact: true }).fill("10");
-  await page.getByLabel("Tháng", { exact: true }).fill("2");
-  await page.getByLabel("Năm", { exact: true }).fill("2024");
-  await page.getByLabel("Giờ", { exact: true }).fill("8");
-  await expect(page.getByText("1/1/2024")).toBeVisible(); // xem trước âm lịch: mùng 1 Tết Giáp Thìn
-  await expect(page.getByText("Giáp Thìn").first()).toBeVisible();
-  await page.getByRole("button", { name: "Lập lá số" }).click();
-  await expect(page).toHaveURL(/\/laso\?/);
   const chart = page.getByTestId("tuvi-chart");
-  await expect(chart).toBeVisible();
   await expect(chart.locator("[data-palace]")).toHaveCount(12);
+  await page.getByRole("button", { name: "Sửa" }).click();
+  await page.locator("#ce-name").fill("Trần Thị B");
+  await page.getByRole("button", { name: "Nữ", exact: true }).click();
+  await page.locator("#ce-day").fill("10");
+  await page.locator("#ce-month").fill("2");
+  await page.locator("#ce-year").fill("2024");
+  await page.locator("#ce-hour").fill("8");
+  await page.getByRole("button", { name: "Lập lại lá số" }).click();
+  await expect(page).toHaveURL(/d=2024-2-10/);
   await expect(chart.getByText("Trần Thị B")).toBeVisible();
+  await expect(chart.getByText(/Dương Nữ/)).toBeVisible();
 });
 
 test("Bố cục 12 cung cố định và dữ liệu lá số mẫu", async ({ page }) => {
@@ -75,13 +74,14 @@ test("Tắt sao lưu", async ({ page }) => {
 
 test("Ngày âm lịch tháng nhuận không hợp lệ bị từ chối", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("radio", { name: "Âm lịch" }).click();
-  await page.getByLabel("Ngày", { exact: true }).fill("15");
-  await page.getByLabel("Tháng (âm)").fill("5");
-  await page.getByLabel("Năm", { exact: true }).fill("2020");
-  await page.getByRole("switch", { name: "Tháng nhuận" }).click();
+  await page.getByRole("button", { name: "Sửa" }).click();
+  await page.getByRole("button", { name: "Âm lịch", exact: true }).click();
+  await page.locator("#ce-day").fill("15");
+  await page.locator("#ce-month").fill("5");
+  await page.locator("#ce-year").fill("2020");
+  await page.getByLabel("Tháng nhuận").check();
   await expect(page.getByText("không có tháng 5 nhuận")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Lập lá số" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Lập lại lá số" })).toBeDisabled();
 });
 
 test("Trang danh mục sao", async ({ page }) => {
@@ -98,8 +98,7 @@ test("Xuất PNG và PDF", async ({ page }) => {
   expect(pdf.suggestedFilename()).toBe("tuvi-nguyen-van-a.pdf");
 });
 
-test("Sửa thông tin ngay trong ô giữa và lập lại lá số", async ({ page, isMobile }) => {
-  test.skip(!!isMobile, "Thanh điều khiển ô giữa chỉ có trên desktop");
+test("Sửa thông tin và lập lại lá số giữ nguyên ngày sinh khác", async ({ page }) => {
   await page.goto(CHART_URL);
   await page.getByRole("button", { name: "Sửa" }).click();
   await page.locator("#ce-name").fill("Trần B");

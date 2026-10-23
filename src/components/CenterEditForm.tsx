@@ -13,11 +13,14 @@ export function CenterEditForm({
   calendarRules,
   onSubmit,
   onCancel,
+  onAdvanced,
 }: {
   request: ChartRequest;
   calendarRules: CalendarRuleSet;
   onSubmit: (r: ChartRequest) => void;
   onCancel: () => void;
+  /** Mở form đầy đủ (trường phái, quy tắc nâng cao). */
+  onAdvanced?: () => void;
 }) {
   const b = request.birth;
   const [name, setName] = useState(request.name ?? "");
@@ -124,7 +127,12 @@ export function CenterEditForm({
           <AlertTriangle className="h-3 w-3" /> {error}
         </p>
       )}
-      <div className="flex justify-end gap-2 pt-1">
+      <div className="flex items-center justify-end gap-2 pt-1">
+        {onAdvanced && (
+          <button type="button" onClick={onAdvanced} className="mr-auto text-[11.5px] font-medium text-primary hover:underline">
+            Cấu hình nâng cao…
+          </button>
+        )}
         <button type="button" onClick={onCancel} className="h-7 rounded-md border px-3 text-[12px] font-medium hover:bg-muted">Huỷ</button>
         <button type="submit" disabled={!!error} className="flex h-7 items-center gap-1 rounded-md bg-primary px-3 text-[12px] font-medium text-primary-foreground disabled:opacity-50">
           <RotateCw className="h-3.5 w-3.5" /> Lập lại lá số

@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { HomeView } from "@/components/HomeView";
+import { ChartWorkspace } from "@/components/ChartWorkspace";
 
 export default function HomePage() {
   return (
     <Suspense fallback={null}>
-      <HomeView />
+      <ChartWorkspace />
     </Suspense>
   );
 }

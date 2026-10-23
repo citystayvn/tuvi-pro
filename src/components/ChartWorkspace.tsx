@@ -28,8 +28,29 @@ import { BirthForm } from "./BirthForm";
 const IS_ARTIFACT = process.env.NEXT_PUBLIC_ARTIFACT === "1";
 const BASE_WIDTH = 920;
 const BASE_HEIGHT = 945;
-const MIN_WIDTH = 860;
-const MIN_WIDTH_MOBILE = 620;
+/** Chiều rộng tối thiểu để vẽ lá số; màn hình hẹp hơn thì thu nhỏ cả lá số. */
+const MIN_WIDTH = 620;
+/** Lá số mở sẵn khi chưa nhập thông tin. */
+const DEFAULT_REQUEST: ChartRequest = {
+  name: "",
+  gender: "male",
+  birth: { calendar: "solar", day: 1, month: 1, year: 2000, hour: 12, minute: 30, timeZone: 7 },
+};
+/** Giới hạn hệ số cỡ chữ trong lá số (1 = cỡ gốc). */
+const TEXT_SCALE_MAX = 2;
+const TEXT_SCALE_MIN = 0.7;
+
+function useMediaQuery(query: string) {
+  const [match, setMatch] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatch(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return match;
+}
 
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(true);
@@ -46,7 +67,7 @@ function useIsDesktop() {
 export function ChartWorkspace() {
   const params = useSearchParams();
   const router = useRouter();
-  const request = useMemo(() => searchParamsToRequest(new URLSearchParams(params.toString())), [params]);
+  const request = useMemo(() => searchParamsToRequest(new URLSearchParams(params.toString())) ?? DEFAULT_REQUEST, [params]);
   const display = useChartStore((s) => s.display);
   const setDisplay = useChartStore((s) => s.setDisplay);
   const saveChart = useChartStore((s) => s.saveChart);
@@ -59,6 +80,8 @@ export function ChartWorkspace() {
   const chartRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const isDesktop = useIsDesktop();
+  // Từ 768px trở lên, thanh điều khiển nằm trong ô giữa lá số (trang không cuộn).
+  const centerControls = useMediaQuery("(min-width: 768px)");
 
   useEffect(() => {
     if (request?.viewYear) setViewYear(request.viewYear);
@@ -76,6 +99,7 @@ export function ChartWorkspace() {
   const [showWarnings, setShowWarnings] = useState(false);
   const [tab, setTab] = useState<"chart" | "interpretation">("chart");
   const [centerMode, setCenterMode] = useState<"info" | "edit" | "display">("info");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Lá số luôn lấp đúng phần khung nhìn còn lại của trình duyệt – không bao giờ phải cuộn.
   // Kích thước gốc (box.w × box.h) được kéo giãn theo tỉ lệ khung, rồi scale bằng box.zoom.
@@ -87,8 +111,8 @@ export function ChartWorkspace() {
     const top = el.getBoundingClientRect().top + window.scrollY;
     const h = window.innerHeight - top - 12;
     if (w <= 0 || h <= 0) return;
-    const minWidth = window.innerWidth < 640 ? MIN_WIDTH_MOBILE : MIN_WIDTH;
-    const zoom = Math.min(w / minWidth, h / BASE_HEIGHT);
+    // Lá số luôn lấp đúng khung; chỉ thu nhỏ toàn bộ khi khung hẹp hơn MIN_WIDTH.
+    const zoom = Math.min(1, w / MIN_WIDTH);
     setBox({ zoom, w: w / zoom, h: h / zoom });
   }, []);
   useLayoutEffect(() => {
@@ -105,6 +129,26 @@ export function ChartWorkspace() {
     };
   }, [fit, tab, result?.ok]);
 
+  // Cỡ chữ lớn nhất mà mọi ô vẫn chứa đủ nội dung (không tràn dọc, không cắt tên sao).
+  useLayoutEffect(() => {
+    const el = chartRef.current;
+    if (!el || tab !== "chart") return;
+    const overflows = () => {
+      for (const g of el.querySelectorAll<HTMLElement>("[data-palace] > div.grid")) if (g.scrollHeight > g.clientHeight + 1) return true;
+      for (const t of el.querySelectorAll<HTMLElement>(".truncate")) if (t.scrollWidth > t.clientWidth + 1) return true;
+      const center = el.querySelector<HTMLElement>("[data-center]");
+      if (center && center.scrollHeight > center.clientHeight + 1) return true;
+      return false;
+    };
+    let k = TEXT_SCALE_MAX;
+    el.style.setProperty("--k", String(k));
+    while (k > TEXT_SCALE_MIN && overflows()) {
+      k = +(k * 0.95).toFixed(3);
+      el.style.setProperty("--k", String(k));
+    }
+  });
+
+
   const notify = (m: string) => {
     setToast(m);
     setTimeout(() => setToast(null), 2200);
@@ -117,21 +161,6 @@ export function ChartWorkspace() {
       router.replace(`/laso?${p.toString()}`, { scroll: false });
     }
   };
-
-  if (!request) {
-    return (
-      <div>
-        <PageHeader title="Lá số" description="Chưa có dữ liệu. Nhập thông tin ngày giờ sinh để lập lá số." />
-        <div className="mx-auto max-w-3xl p-4 md:p-8">
-          <Card>
-            <CardContent className="pt-5">
-              <BirthForm />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   if (!result?.ok) {
     return (
@@ -235,10 +264,8 @@ export function ChartWorkspace() {
 
   const actions = (
     <div className={cn("grid gap-1", IS_ARTIFACT ? "grid-cols-2" : "grid-cols-6 xl:grid-cols-3")}>
-      <Button variant="outline" size="sm" asChild title="Sửa thông tin">
-        <Link href={`/?${requestToSearchParams(request).toString()}`} aria-label="Sửa">
-          <Pencil /> <span className="hidden sm:inline">Sửa</span>
-        </Link>
+      <Button variant="outline" size="sm" onClick={() => setCenterMode("edit")} aria-label="Sửa" title="Sửa thông tin">
+        <Pencil /> <span className="hidden sm:inline">Sửa</span>
       </Button>
       <Button variant="outline" size="sm" onClick={save} aria-label="Lưu" title="Lưu lá số">
         <Bookmark /> <span className="hidden sm:inline">Lưu</span>
@@ -369,7 +396,7 @@ export function ChartWorkspace() {
   const centerBody =
     centerMode === "edit" ? (
       <div className="no-print" data-export-hide="1">
-        <CenterEditForm request={{ ...request, viewYear }} calendarRules={chart.rules.calendar} onSubmit={reload} onCancel={() => setCenterMode("info")} />
+        <CenterEditForm request={{ ...request, viewYear }} calendarRules={chart.rules.calendar} onSubmit={reload} onCancel={() => setCenterMode("info")} onAdvanced={() => setAdvancedOpen(true)} />
       </div>
     ) : centerMode === "display" ? (
       <div className="no-print space-y-2" data-export-hide="1">
@@ -401,8 +428,8 @@ export function ChartWorkspace() {
             selectedStar={selectedStar}
             onSelectPalace={onSelectPalace}
             onSelectStar={onSelectStar}
-            centerToolbar={isDesktop ? centerToolbar : undefined}
-            centerBody={isDesktop ? centerBody : undefined}
+            centerToolbar={centerControls ? centerToolbar : undefined}
+            centerBody={centerControls ? centerBody : undefined}
           />
         </div>
       </div>
@@ -452,15 +479,38 @@ export function ChartWorkspace() {
         </div>
       ) : (
         <div className="space-y-3 p-3">
-          {tab !== "chart" && controlPanel}
+          {tab !== "chart" && !centerControls && controlPanel}
           {mainContent}
-          {tab === "chart" && controlPanel}
-          {tab === "chart" && <Legend />}
+          {tab === "chart" && !centerControls && controlPanel}
+          {tab === "chart" && !centerControls && <Legend />}
           <Sheet open={!!detail} onOpenChange={(o) => !o && clearSelection()}>
             {detail && <SheetContent title={selectedStar ? selectedStar.displayName : `Cung ${chart.palaces[selectedBranch!].name}`}>{detail}</SheetContent>}
           </Sheet>
         </div>
       )}
+
+      {!centerControls && (
+        <Sheet open={centerMode === "edit"} onOpenChange={(o) => !o && setCenterMode("info")}>
+          {centerMode === "edit" && (
+            <SheetContent title="Sửa thông tin">
+              <CenterEditForm request={{ ...request, viewYear }} calendarRules={chart.rules.calendar} onSubmit={reload} onCancel={() => setCenterMode("info")} onAdvanced={() => setAdvancedOpen(true)} />
+            </SheetContent>
+          )}
+        </Sheet>
+      )}
+      <Sheet open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        {advancedOpen && (
+          <SheetContent title="Thông tin & cấu hình nâng cao" className="max-w-2xl">
+            <BirthForm
+              initial={{ ...request, viewYear }}
+              onDone={() => {
+                setAdvancedOpen(false);
+                setCenterMode("info");
+              }}
+            />
+          </SheetContent>
+        )}
+      </Sheet>
 
       {toast && (
         <div role="status" className="no-print fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-sm text-background shadow-lg animate-fade-in">

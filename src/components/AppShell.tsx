@@ -2,15 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookOpen, LayoutGrid, Menu, Moon, PenLine, Star, Sun, Bookmark, X } from "lucide-react";
+import { LayoutGrid, Menu, Moon, Star, Sun, Bookmark, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 const NAV = [
-  { href: "/", label: "Lập lá số", icon: PenLine },
-  { href: "/laso", label: "Lá số", icon: LayoutGrid },
+  { href: "/", label: "Lá số", icon: LayoutGrid },
   { href: "/saved", label: "Đã lưu", icon: Bookmark },
   { href: "/registry", label: "Danh mục sao", icon: Star },
-  { href: "/methodology", label: "Phương pháp", icon: BookOpen },
 ];
 
 function Logo() {
@@ -30,7 +28,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-0.5">
       {NAV.map(({ href, label, icon: Icon }) => {
-        const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        const active = href === "/" ? pathname === "/" || pathname.startsWith("/laso") : pathname.startsWith(href);
         return (
           <Link
             key={href}

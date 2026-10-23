@@ -79,7 +79,7 @@ const RULE_SELECTS: RuleSelect[] = [
   { key: "trangSinhDirection", group: "annualCycle", field: "trangSinhDirection", label: "Chiều Tràng Sinh", options: [{ value: "by-yin-yang-gender", label: "Theo Âm Dương Nam Nữ" }, { value: "by-gender", label: "Nam thuận, Nữ nghịch" }] },
 ];
 
-export function BirthForm({ initial }: { initial?: ChartRequest }) {
+export function BirthForm({ initial, onDone }: { initial?: ChartRequest; onDone?: () => void }) {
   const router = useRouter();
   const thisYear = new Date().getFullYear();
   const display = useChartStore((s) => s.display);
@@ -147,6 +147,7 @@ export function BirthForm({ initial }: { initial?: ChartRequest }) {
     setTouched(true);
     if (!request || !preview?.ok) return;
     router.push(`/laso?${requestToSearchParams(request).toString()}`);
+    onDone?.();
   };
 
   const fillExample = () => {

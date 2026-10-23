@@ -27,15 +27,15 @@ export function StarItem({ star, size = "aux", showBrightness, showTransformatio
       title={`${star.displayName}${star.brightness && star.brightness !== "UNDEFINED" ? ` (${star.brightness})` : ""}`}
       className={cn(
         "group inline-flex max-w-full items-center gap-0.5 truncate rounded px-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-        size === "main" ? "text-[13px] font-bold uppercase leading-[16px] tracking-wide" : "text-[11px] font-medium leading-[12.5px]",
+        size === "main" ? "text-[length:calc(13px*var(--k,1))] font-bold uppercase leading-[calc(16px*var(--k,1))] tracking-wide" : "text-[length:calc(11px*var(--k,1))] font-medium leading-[calc(12.5px*var(--k,1))]",
         starTextClass(star),
         selected && "bg-accent ring-1 ring-primary",
       )}
     >
       <span className="truncate">{star.displayName}</span>
-      {bright && <span className="text-[10px] font-semibold opacity-80">({bright})</span>}
+      {bright && <span className="text-[length:calc(10px*var(--k,1))] font-semibold opacity-80">({bright})</span>}
       {showTransformations && star.transformation && (
-        <span className={cn("ml-0.5 rounded px-1 text-[9px] font-bold normal-case leading-[14px]", TRANSFORMATION_STYLE[star.transformation].className)}>
+        <span className={cn("ml-0.5 rounded px-1 text-[length:calc(9px*var(--k,1))] font-bold normal-case leading-[calc(14px*var(--k,1))]", TRANSFORMATION_STYLE[star.transformation].className)}>
           {TRANSFORMATION_STYLE[star.transformation].short}
         </span>
       )}

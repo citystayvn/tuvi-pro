@@ -20,7 +20,7 @@ npm run build
 
 ```
 src/
-├── app/                 # Trang: / (form), /laso, /saved, /registry, /accuracy, /methodology
+├── app/                 # Trang: / (form), /laso, /saved, /registry
 ├── components/          # Rendering Engine: BirthForm, TuViChart, PalaceCell, StarItem, ChartCenter, ChartControls…
 ├── core/                # Calculation Engine – hàm thuần, không phụ thuộc React
 │   ├── calendar/        # Calendar Engine: âm lịch VN, tiết khí, Can Chi, múi giờ
