@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-10-23T15:05:08.759Z",
+  "totals": {
+    "total": 145,
+    "passed": 145,
+    "failed": 0
+  },
+  "engines": [
+    {
+      "name": "Calendar Engine",
+      "passed": 61,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Palace Engine",
+      "passed": 13,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Main Stars",
+      "passed": 25,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Auxiliary Stars",
+      "passed": 19,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Transformations",
+      "passed": 13,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Major Periods",
+      "passed": 4,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Annual Periods",
+      "passed": 5,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Cross-check",
+      "passed": 9,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "Interpretation",
+      "passed": 4,
+      "failed": 0,
+      "status": "PASS"
+    }
+  ],
+  "stars": {
+    "total": 114,
+    "byVerification": {
+      "reference-verified": 15,
+      "cross-checked": 86,
+      "conflicting": 9,
+      "rule-tested": 1,
+      "not-implemented": 3
+    }
+  },
+  "conflicts": {
+    "total": 16,
+    "open": 3
+  }
+}

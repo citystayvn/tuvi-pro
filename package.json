@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:report": "vitest run && tsx scripts/accuracy-report.ts",
+    "test:report": "tsx --tsconfig tsconfig.json scripts/accuracy-report.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

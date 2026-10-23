@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 20% 98%;
+    --foreground: 240 10% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 12%;
+    --primary: 248 70% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 14% 95%;
+    --secondary-foreground: 240 10% 20%;
+    --muted: 240 14% 95%;
+    --muted-foreground: 240 6% 45%;
+    --accent: 248 80% 96%;
+    --accent-foreground: 248 60% 40%;
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 12% 90%;
+    --input: 240 12% 88%;
+    --ring: 248 70% 58%;
+    --radius: 0.75rem;
+    --sidebar: 0 0% 100%;
+
+    --el-kim: 220 9% 46%;
+    --el-moc: 142 64% 32%;
+    --el-thuy: 221 70% 38%;
+    --el-hoa: 0 72% 48%;
+    --el-tho: 28 80% 40%;
+    --good: 160 70% 30%;
+    --bad: 350 70% 45%;
+    --annual: 271 60% 50%;
+    --decadal: 192 80% 34%;
+  }
+  .dark {
+    --background: 240 10% 7%;
+    --foreground: 240 10% 94%;
+    --card: 240 8% 10%;
+    --card-foreground: 240 10% 94%;
+    --popover: 240 8% 10%;
+    --popover-foreground: 240 10% 94%;
+    --primary: 248 80% 68%;
+    --primary-foreground: 240 10% 8%;
+    --secondary: 240 6% 16%;
+    --secondary-foreground: 240 10% 90%;
+    --muted: 240 6% 16%;
+    --muted-foreground: 240 6% 65%;
+    --accent: 248 30% 20%;
+    --accent-foreground: 248 80% 85%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 20%;
+    --input: 240 6% 22%;
+    --ring: 248 80% 68%;
+    --sidebar: 240 8% 9%;
+
+    --el-kim: 220 9% 70%;
+    --el-moc: 142 55% 55%;
+    --el-thuy: 213 90% 70%;
+    --el-hoa: 0 85% 66%;
+    --el-tho: 33 85% 60%;
+    --good: 158 60% 55%;
+    --bad: 350 85% 68%;
+    --annual: 271 80% 75%;
+    --decadal: 190 80% 60%;
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .print-area {
+    transform: none !important;
+    width: 100% !important;
+  }
+}
