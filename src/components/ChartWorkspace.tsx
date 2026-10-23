@@ -10,10 +10,11 @@ import { branchName } from "@/core/stems-branches";
 import { searchParamsToRequest, requestToSearchParams } from "@/utils/chart-url";
 import { exportPdf, exportPng } from "@/utils/export";
 import { useChartStore } from "@/store/useChartStore";
+import { cn } from "@/utils/cn";
 import { PageHeader } from "./AppShell";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { TuViChart } from "./TuViChart";
 import { ChartControls } from "./ChartControls";
@@ -24,6 +25,8 @@ import { BirthForm } from "./BirthForm";
 
 const BASE_WIDTH = 920;
 const BASE_HEIGHT = 945;
+const MIN_WIDTH = 860;
+const MIN_WIDTH_MOBILE = 620;
 
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(true);
@@ -48,7 +51,6 @@ export function ChartWorkspace() {
   const [viewYear, setViewYear] = useState<number>(() => request?.viewYear ?? new Date().getFullYear());
   const [selectedBranch, setSelectedBranch] = useState<number | null>(null);
   const [selectedStar, setSelectedStar] = useState<ChartStar | null>(null);
-  const [zoom, setZoom] = useState(1);
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
@@ -68,34 +70,36 @@ export function ChartWorkspace() {
     }
   }, [request, viewYear]);
 
-  // Tự co lá số vừa khung nhìn (cả chiều rộng lẫn chiều cao) để không phải cuộn trang.
-  const [autoFit, setAutoFit] = useState(true);
+  const [showWarnings, setShowWarnings] = useState(false);
+  const [tab, setTab] = useState<"chart" | "interpretation" | "data">("chart");
+
+  // Lá số luôn lấp đúng phần khung nhìn còn lại của trình duyệt – không bao giờ phải cuộn.
+  // Kích thước gốc (box.w × box.h) được kéo giãn theo tỉ lệ khung, rồi scale bằng box.zoom.
+  const [box, setBox] = useState({ w: BASE_WIDTH, h: BASE_HEIGHT, zoom: 1 });
   const fit = useCallback(() => {
     const el = viewportRef.current;
     if (!el) return;
-    const w = el.clientWidth || BASE_WIDTH;
+    const w = el.clientWidth;
     const top = el.getBoundingClientRect().top + window.scrollY;
-    const availH = window.innerHeight - top - 12;
-    const byWidth = w / BASE_WIDTH;
-    // Trên màn hình hẹp (mobile) chỉ co theo chiều rộng, cho phép cuộn/pan.
-    const z = window.innerWidth >= 1024 ? Math.min(byWidth, availH / BASE_HEIGHT) : byWidth;
-    setZoom(Math.max(0.4, Math.min(1.6, +z.toFixed(3))));
-    setAutoFit(true);
+    const h = window.innerHeight - top - 12;
+    if (w <= 0 || h <= 0) return;
+    const minWidth = window.innerWidth < 640 ? MIN_WIDTH_MOBILE : MIN_WIDTH;
+    const zoom = Math.min(w / minWidth, h / BASE_HEIGHT);
+    setBox({ zoom, w: w / zoom, h: h / zoom });
   }, []);
   useLayoutEffect(() => {
     fit();
-  }, [fit, result?.ok, isDesktop]);
+  }, [fit, result?.ok, isDesktop, tab]);
   useEffect(() => {
-    if (!autoFit) return;
-    const onResize = () => fit();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [autoFit, fit]);
-  const manualZoom = (z: number) => {
-    setAutoFit(false);
-    setZoom(z);
-  };
-  const [showWarnings, setShowWarnings] = useState(false);
+    const el = viewportRef.current;
+    window.addEventListener("resize", fit);
+    const ro = el ? new ResizeObserver(() => fit()) : null;
+    if (el && ro) ro.observe(el);
+    return () => {
+      window.removeEventListener("resize", fit);
+      ro?.disconnect();
+    };
+  }, [fit, tab, result?.ok]);
 
   const notify = (m: string) => {
     setToast(m);
@@ -202,138 +206,145 @@ export function ChartWorkspace() {
     }
   };
 
+  const warningsBlock =
+    chart.birth.warnings.length > 0 ? (
+      <div className="no-print">
+        <button
+          type="button"
+          onClick={() => setShowWarnings((v) => !v)}
+          aria-expanded={showWarnings}
+          className="flex w-full items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+        >
+          <AlertTriangle className="h-3.5 w-3.5" /> {chart.birth.warnings.length} lưu ý về lịch pháp
+        </button>
+        {showWarnings && (
+          <ul className="mt-1.5 space-y-1 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            {chart.birth.warnings.map((w) => (
+              <li key={w.code} className="flex gap-1.5">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" /> {w.message}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    ) : null;
+
+  const actions = (
+    <div className="grid grid-cols-6 gap-1 xl:grid-cols-3">
+      <Button variant="outline" size="sm" asChild title="Sửa thông tin">
+        <Link href={`/?${requestToSearchParams(request).toString()}`} aria-label="Sửa">
+          <Pencil /> <span className="hidden sm:inline">Sửa</span>
+        </Link>
+      </Button>
+      <Button variant="outline" size="sm" onClick={save} aria-label="Lưu" title="Lưu lá số">
+        <Bookmark /> <span className="hidden sm:inline">Lưu</span>
+      </Button>
+      <Button variant="outline" size="sm" onClick={copyLink} aria-label="Chia sẻ" title="Sao chép liên kết">
+        <Link2 /> <span className="hidden sm:inline">Chia sẻ</span>
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => doExport("png")} disabled={busy} aria-label="PNG" title="Xuất ảnh PNG">
+        <Download /> <span className="hidden sm:inline">PNG</span>
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => doExport("pdf")} disabled={busy} aria-label="PDF" title="Xuất PDF">
+        <FileDown /> <span className="hidden sm:inline">PDF</span>
+      </Button>
+      <Button size="sm" onClick={() => window.print()} aria-label="In" title="In lá số">
+        <Printer /> <span className="hidden sm:inline">In</span>
+      </Button>
+    </div>
+  );
+
+  // Toàn bộ thông tin & điều khiển nằm ở cột phải (desktop) hoặc phía trên (màn hình nhỏ).
+  const controlPanel = (
+    <div className="no-print space-y-3">
+      <div>
+        <h1 className="truncate text-lg font-semibold leading-tight">{title}</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {chart.yinYangGender} · {chart.banMenh.name} · {chart.cuc.name} · Mệnh tại {branchName(chart.menhBranch)}, Thân cư {chart.thanPalaceName}
+        </p>
+      </div>
+      {actions}
+      <TabsList className="grid h-9 w-full grid-cols-3">
+        <TabsTrigger value="chart">
+          <LayoutGrid /> Lá số
+        </TabsTrigger>
+        <TabsTrigger value="interpretation">
+          <ScrollText /> Luận giải
+        </TabsTrigger>
+        <TabsTrigger value="data">
+          <Table2 /> Dữ liệu
+        </TabsTrigger>
+      </TabsList>
+      {tab === "chart" && <ChartControls viewYear={viewYear} onViewYear={changeYear} display={display} onDisplay={setDisplay} inline />}
+      {warningsBlock}
+    </div>
+  );
+
+  const chartView = (
+    <div ref={viewportRef} className="relative w-full overflow-hidden" style={{ height: box.h * box.zoom }} onClick={clearSelection}>
+      <div>
+        <div style={{ width: box.w, height: box.h, transform: `scale(${box.zoom})`, transformOrigin: "top left" }} onClick={(e) => e.stopPropagation()}>
+          <TuViChart
+            ref={chartRef}
+            chart={chart}
+            display={display}
+            selectedBranch={selectedBranch}
+            selectedStar={selectedStar}
+            onSelectPalace={onSelectPalace}
+            onSelectStar={onSelectStar}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const mainContent = tab === "chart" ? chartView : tab === "interpretation" ? <InterpretationView chart={chart} /> : <CalculationDataView chart={chart} />;
+
   return (
-    <div>
-      <Tabs defaultValue="chart">
-        <div className="no-print flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-card/60 px-3 py-2 md:px-5">
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold leading-tight">{title}</h1>
-            <p className="truncate text-xs text-muted-foreground">
-              {chart.yinYangGender} · {chart.banMenh.name} · {chart.cuc.name} · Mệnh tại {branchName(chart.menhBranch)}, Thân cư {chart.thanPalaceName}
-            </p>
-          </div>
-          <TabsList className="h-8">
-            <TabsTrigger value="chart" className="py-0.5">
-              <LayoutGrid /> Lá số
-            </TabsTrigger>
-            <TabsTrigger value="interpretation" className="py-0.5">
-              <ScrollText /> Luận giải
-            </TabsTrigger>
-            <TabsTrigger value="data" className="py-0.5">
-              <Table2 /> Dữ liệu
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" asChild title="Sửa thông tin">
-              <Link href={`/?${requestToSearchParams(request).toString()}`} aria-label="Sửa">
-                <Pencil /> <span className="hidden 2xl:inline">Sửa</span>
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={save} aria-label="Lưu" title="Lưu lá số">
-              <Bookmark /> <span className="hidden 2xl:inline">Lưu</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={copyLink} aria-label="Chia sẻ" title="Sao chép liên kết">
-              <Link2 /> <span className="hidden 2xl:inline">Chia sẻ</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => doExport("png")} disabled={busy} aria-label="PNG" title="Xuất ảnh PNG">
-              <Download /> <span className="hidden 2xl:inline">PNG</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => doExport("pdf")} disabled={busy} aria-label="PDF" title="Xuất PDF">
-              <FileDown /> <span className="hidden 2xl:inline">PDF</span>
-            </Button>
-            <Button size="sm" onClick={() => window.print()} aria-label="In" title="In lá số">
-              <Printer /> <span className="hidden 2xl:inline">In</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="p-2 md:px-4 md:py-3">
-          <TabsContent value="chart" className="mt-0">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex flex-wrap items-start gap-2">
-                  <ChartControls viewYear={viewYear} onViewYear={changeYear} display={display} onDisplay={setDisplay} zoom={zoom} onZoom={manualZoom} onFit={fit} />
-                  {chart.birth.warnings.length > 0 && (
-                    <div className="no-print relative">
-                      <Button variant="outline" size="sm" className="h-9 border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" onClick={() => setShowWarnings((v) => !v)} aria-expanded={showWarnings}>
-                        <AlertTriangle /> {chart.birth.warnings.length} lưu ý
-                      </Button>
-                      {showWarnings && (
-                        <div className="absolute left-0 top-full z-30 mt-2 w-[min(420px,90vw)] rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 shadow-lg dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-                          <ul className="space-y-1">
-                            {chart.birth.warnings.map((w) => (
-                              <li key={w.code} className="flex gap-1.5">
-                                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" /> {w.message}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div ref={viewportRef} className="relative w-full overflow-auto rounded-xl scrollbar-thin" style={{ touchAction: "pan-x pan-y" }} onClick={clearSelection}>
-                  <div className="mx-auto" style={{ width: BASE_WIDTH * zoom, height: BASE_HEIGHT * zoom }}>
-                    <div style={{ width: BASE_WIDTH, height: BASE_HEIGHT, transform: `scale(${zoom})`, transformOrigin: "top left" }} onClick={(e) => e.stopPropagation()}>
-                      <TuViChart
-                        ref={chartRef}
-                        chart={chart}
-                        display={display}
-                        selectedBranch={selectedBranch}
-                        selectedStar={selectedStar}
-                        onSelectPalace={onSelectPalace}
-                        onSelectStar={onSelectStar}
-                      />
-                    </div>
-                  </div>
-                </div>
-                {!isDesktop && <Legend />}
-              </div>
-
-              {isDesktop && (
-                <aside className="no-print sticky top-3 w-[340px] shrink-0">
-                  <Card className="max-h-[calc(100vh-7rem)] overflow-y-auto">
-                    {detail ? (
-                      <CardContent className="pt-5">{detail}</CardContent>
-                    ) : (
-                      <>
-                        <CardHeader>
-                          <CardTitle>Chi tiết</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm text-muted-foreground">
-                          <p>Nhấp vào một cung để xem tam phương tứ chính, sao hội chiếu và bộ sao.</p>
-                          <p>Nhấp vào một sao để xem vị trí, trạng thái Miếu Hãm, ý nghĩa và các sao hội chiếu.</p>
-                          <Legend />
-                        </CardContent>
-                      </>
-                    )}
-                  </Card>
-                </aside>
-              )}
-            </div>
-            {!isDesktop && (
-              <Sheet open={!!detail} onOpenChange={(o) => !o && clearSelection()}>
-                {detail && <SheetContent title={selectedStar ? selectedStar.displayName : `Cung ${chart.palaces[selectedBranch!].name}`}>{detail}</SheetContent>}
-              </Sheet>
+    <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+      {isDesktop ? (
+        <div className="flex h-screen">
+          <div className={cn("min-w-0 flex-1 p-3", tab === "chart" ? "overflow-hidden" : "overflow-auto")}>{mainContent}</div>
+          <aside className="no-print flex h-screen w-[360px] shrink-0 flex-col gap-4 overflow-y-auto border-l bg-card/60 p-4">
+            {controlPanel}
+            {tab === "chart" && (
+              <Card>
+                {detail ? (
+                  <CardContent className="pt-5">{detail}</CardContent>
+                ) : (
+                  <>
+                    <CardHeader>
+                      <CardTitle>Chi tiết</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm text-muted-foreground">
+                      <p>Nhấp vào một cung để xem tam phương tứ chính, sao hội chiếu và bộ sao.</p>
+                      <p>Nhấp vào một sao để xem vị trí, trạng thái Miếu Hãm, ý nghĩa và các sao hội chiếu.</p>
+                      <Legend />
+                    </CardContent>
+                  </>
+                )}
+              </Card>
             )}
-          </TabsContent>
-
-          <TabsContent value="interpretation" className="mt-0">
-            <InterpretationView chart={chart} />
-          </TabsContent>
-
-          <TabsContent value="data" className="mt-0">
-            <CalculationDataView chart={chart} />
-          </TabsContent>
+          </aside>
         </div>
-      </Tabs>
+      ) : (
+        <div className="space-y-3 p-3">
+          {tab !== "chart" && controlPanel}
+          {mainContent}
+          {tab === "chart" && controlPanel}
+          {tab === "chart" && <Legend />}
+          <Sheet open={!!detail} onOpenChange={(o) => !o && clearSelection()}>
+            {detail && <SheetContent title={selectedStar ? selectedStar.displayName : `Cung ${chart.palaces[selectedBranch!].name}`}>{detail}</SheetContent>}
+          </Sheet>
+        </div>
+      )}
 
       {toast && (
         <div role="status" className="no-print fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-sm text-background shadow-lg animate-fade-in">
           {toast}
         </div>
       )}
-    </div>
+    </Tabs>
   );
 }
 

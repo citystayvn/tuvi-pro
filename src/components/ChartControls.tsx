@@ -13,9 +13,12 @@ interface Props {
   onViewYear: (y: number) => void;
   display: DisplayOptions;
   onDisplay: (p: Partial<DisplayOptions>) => void;
-  zoom: number;
-  onZoom: (z: number) => void;
-  onFit: () => void;
+  /** Bỏ trống để ẩn nhóm phóng to/thu nhỏ (lá số tự khớp khung nhìn). */
+  zoom?: number;
+  onZoom?: (z: number) => void;
+  onFit?: () => void;
+  /** Hiển thị bảng tuỳ chọn ngay trong luồng (dùng trong cột điều khiển hẹp). */
+  inline?: boolean;
 }
 
 const TOGGLES: { key: keyof DisplayOptions; label: string }[] = [
@@ -29,7 +32,7 @@ const TOGGLES: { key: keyof DisplayOptions; label: string }[] = [
   { key: "showDecadalStars", label: "Sao đại vận" },
 ];
 
-export function ChartControls({ viewYear, onViewYear, display, onDisplay, zoom, onZoom, onFit }: Props) {
+export function ChartControls({ viewYear, onViewYear, display, onDisplay, zoom, onZoom, onFit, inline }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <div className="no-print relative">
@@ -57,6 +60,7 @@ export function ChartControls({ viewYear, onViewYear, display, onDisplay, zoom, 
           </Button>
         </div>
 
+        {onZoom && zoom !== undefined && (
         <div className="flex items-center gap-1 rounded-lg border bg-card p-1 shadow-sm">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onZoom(Math.max(0.4, +(zoom - 0.1).toFixed(2)))} aria-label="Thu nhỏ">
             <Minus />
@@ -69,15 +73,16 @@ export function ChartControls({ viewYear, onViewYear, display, onDisplay, zoom, 
             <Maximize2 />
           </Button>
         </div>
+        )}
 
         <Button variant={open ? "secondary" : "outline"} size="sm" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           <SlidersHorizontal /> Hiển thị
         </Button>
       </div>
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-2 grid w-[min(640px,92vw)] gap-1 rounded-xl border bg-card p-2 shadow-lg sm:grid-cols-2">
+        <div className={cn("grid gap-1 rounded-xl border bg-card p-2", inline ? "mt-2 w-full grid-cols-2" : "absolute left-0 top-full z-30 mt-2 w-[min(640px,92vw)] shadow-lg sm:grid-cols-2")}>
           {TOGGLES.map((t) => (
-            <label key={t.key} className={cn("flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted/60")}>
+            <label key={t.key} className={cn("flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/60", inline ? "text-xs" : "text-sm")}>
               {t.label}
               <Switch checked={display[t.key] as boolean} onCheckedChange={(v) => onDisplay({ [t.key]: v })} aria-label={t.label} />
             </label>
