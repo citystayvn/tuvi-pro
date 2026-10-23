@@ -15,7 +15,12 @@ function fileBase(name: string) {
 async function renderPng(node: HTMLElement): Promise<string> {
   const { toPng } = await import("html-to-image");
   const bg = getComputedStyle(document.body).backgroundColor || "#ffffff";
-  return toPng(node, { pixelRatio: 2, backgroundColor: bg, cacheBust: true });
+  return toPng(node, {
+    pixelRatio: 2,
+    backgroundColor: bg,
+    cacheBust: true,
+    filter: (n) => !(n instanceof HTMLElement && n.dataset.exportHide === "1"),
+  });
 }
 
 export async function exportPng(node: HTMLElement, name: string) {

@@ -97,3 +97,14 @@ test("Xuất PNG và PDF", async ({ page }) => {
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF" }).click()]);
   expect(pdf.suggestedFilename()).toBe("tuvi-nguyen-van-a.pdf");
 });
+
+test("Sửa thông tin ngay trong ô giữa và lập lại lá số", async ({ page, isMobile }) => {
+  test.skip(!!isMobile, "Thanh điều khiển ô giữa chỉ có trên desktop");
+  await page.goto(CHART_URL);
+  await page.getByRole("button", { name: "Sửa" }).click();
+  await page.locator("#ce-name").fill("Trần B");
+  await page.locator("#ce-year").fill("1995");
+  await page.getByRole("button", { name: "Lập lại lá số" }).click();
+  await expect(page).toHaveURL(/d=1995-8-15/);
+  await expect(page.getByTestId("tuvi-chart").getByText("Trần B")).toBeVisible();
+});

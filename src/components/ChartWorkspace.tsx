@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Bookmark, Download, FileDown, LayoutGrid, Link2, Pencil, Printer, ScrollText, Table2 } from "lucide-react";
+import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, LayoutGrid, Link2, Pencil, Printer, ScrollText, SlidersHorizontal, Table2 } from "lucide-react";
 import { buildChart, type ChartRequest } from "@/core/chart/buildChart";
 import { CalendarInputError } from "@/core/calendar";
 import type { ChartStar } from "@/types/chart";
-import { branchName } from "@/core/stems-branches";
+import { branchName, canChiName, yearBranch, yearStem } from "@/core/stems-branches";
 import { searchParamsToRequest, requestToSearchParams } from "@/utils/chart-url";
 import { exportPdf, exportPng } from "@/utils/export";
 import { useChartStore } from "@/store/useChartStore";
@@ -18,6 +18,8 @@ import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { TuViChart } from "./TuViChart";
 import { ChartControls } from "./ChartControls";
+import { CenterEditForm } from "./CenterEditForm";
+import { Switch } from "./ui/switch";
 import { PalaceDetail, StarDetail } from "./DetailPanel";
 import { InterpretationView } from "./InterpretationView";
 import { CalculationDataView } from "./CalculationDataView";
@@ -74,6 +76,7 @@ export function ChartWorkspace() {
 
   const [showWarnings, setShowWarnings] = useState(false);
   const [tab, setTab] = useState<"chart" | "interpretation" | "data">("chart");
+  const [centerMode, setCenterMode] = useState<"info" | "edit" | "display">("info");
 
   // Lá số luôn lấp đúng phần khung nhìn còn lại của trình duyệt – không bao giờ phải cuộn.
   // Kích thước gốc (box.w × box.h) được kéo giãn theo tỉ lệ khung, rồi scale bằng box.zoom.
@@ -286,6 +289,113 @@ export function ChartWorkspace() {
     </div>
   );
 
+  const reload = (next: ChartRequest) => {
+    setCenterMode("info");
+    clearSelection();
+    router.replace(`/laso?${requestToSearchParams({ ...next, viewYear }).toString()}`, { scroll: false });
+  };
+
+  const cBtn = (active = false) =>
+    cn(
+      "inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[12px] font-medium transition-colors hover:bg-accent [&_svg]:h-3.5 [&_svg]:w-3.5",
+      active ? "border-primary bg-accent text-accent-foreground" : "bg-card",
+    );
+
+  const centerToolbar = (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        <button type="button" className={cBtn(centerMode === "edit")} onClick={() => setCenterMode((m) => (m === "edit" ? "info" : "edit"))} aria-label="Sửa">
+          <Pencil /> Sửa
+        </button>
+        <button type="button" className={cBtn()} onClick={save} aria-label="Lưu">
+          <Bookmark /> Lưu
+        </button>
+        <button type="button" className={cBtn(centerMode === "display")} onClick={() => setCenterMode((m) => (m === "display" ? "info" : "display"))} aria-label="Hiển thị">
+          <SlidersHorizontal /> Hiển thị
+        </button>
+        <span className="mx-0.5 h-4 w-px bg-border" />
+        <button type="button" className={cBtn()} onClick={() => setTab("interpretation")}>
+          <ScrollText /> Luận giải
+        </button>
+        <button type="button" className={cBtn()} onClick={() => setTab("data")}>
+          <Table2 /> Dữ liệu
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-1">
+      <div className="flex items-center gap-1 rounded-md border bg-card px-1 py-0.5">
+        <button type="button" className="rounded p-0.5 hover:bg-muted" onClick={() => changeYear(viewYear - 1)} aria-label="Năm trước">
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+        <span className="text-[11px] text-muted-foreground">Xem hạn</span>
+        <input
+          aria-label="Năm xem hạn"
+          inputMode="numeric"
+          className="h-6 w-14 rounded border border-input bg-card text-center text-[12px] font-semibold"
+          value={viewYear}
+          onChange={(e) => {
+            const v = Number(e.target.value.replace(/\D/g, ""));
+            if (v >= 1800 && v <= 2199) changeYear(v);
+          }}
+        />
+        <span className="text-[11px] font-medium text-muted-foreground">{canChiName(yearStem(viewYear), yearBranch(viewYear))}</span>
+        <button type="button" className="rounded p-0.5 hover:bg-muted" onClick={() => changeYear(viewYear + 1)} aria-label="Năm sau">
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+        {!IS_ARTIFACT && (
+          <>
+            <button type="button" className={cBtn()} onClick={copyLink} aria-label="Chia sẻ" title="Sao chép liên kết">
+              <Link2 />
+            </button>
+            <button type="button" className={cBtn()} onClick={() => doExport("png")} disabled={busy} aria-label="PNG" title="Xuất ảnh PNG">
+              <Download />
+            </button>
+            <button type="button" className={cBtn()} onClick={() => doExport("pdf")} disabled={busy} aria-label="PDF" title="Xuất PDF">
+              <FileDown />
+            </button>
+            <button type="button" className={cBtn()} onClick={() => window.print()} aria-label="In" title="In lá số">
+              <Printer />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const DISPLAY_TOGGLES: { key: keyof typeof display; label: string }[] = [
+    { key: "showAuxiliary", label: "Phụ tinh" },
+    { key: "showMinorStars", label: "Sao nhỏ" },
+    { key: "showCycles", label: "Vòng Thái Tuế / Bác Sĩ" },
+    { key: "showTrangSinh", label: "Tràng Sinh" },
+    { key: "showBrightness", label: "Miếu Hãm" },
+    { key: "showTransformations", label: "Tứ Hóa" },
+    { key: "showAnnualStars", label: "Sao lưu niên" },
+    { key: "showDecadalStars", label: "Sao đại vận" },
+  ];
+
+  const centerBody =
+    centerMode === "edit" ? (
+      <div className="no-print" data-export-hide="1">
+        <CenterEditForm request={{ ...request, viewYear }} calendarRules={chart.rules.calendar} onSubmit={reload} onCancel={() => setCenterMode("info")} />
+      </div>
+    ) : centerMode === "display" ? (
+      <div className="no-print space-y-2" data-export-hide="1">
+        <div className="grid grid-cols-2 gap-1">
+          {DISPLAY_TOGGLES.map((t) => (
+            <label key={t.key} className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-[12px] hover:bg-muted/60">
+              {t.label}
+              <Switch checked={display[t.key] as boolean} onCheckedChange={(v) => setDisplay({ [t.key]: v })} aria-label={t.label} />
+            </label>
+          ))}
+        </div>
+        <div className="flex justify-end">
+          <button type="button" className={cBtn()} onClick={() => setCenterMode("info")}>
+            Xong
+          </button>
+        </div>
+      </div>
+    ) : undefined;
+
   const chartView = (
     <div ref={viewportRef} className="relative w-full overflow-hidden" style={{ height: box.h * box.zoom }} onClick={clearSelection}>
       <div>
@@ -298,22 +408,35 @@ export function ChartWorkspace() {
             selectedStar={selectedStar}
             onSelectPalace={onSelectPalace}
             onSelectStar={onSelectStar}
+            centerToolbar={isDesktop ? centerToolbar : undefined}
+            centerBody={isDesktop ? centerBody : undefined}
           />
         </div>
       </div>
     </div>
   );
 
-  const mainContent = tab === "chart" ? chartView : tab === "interpretation" ? <InterpretationView chart={chart} /> : <CalculationDataView chart={chart} />;
+  const mainContent =
+    tab === "chart" ? (
+      chartView
+    ) : (
+      <div className="space-y-3">
+        <Button variant="outline" size="sm" onClick={() => setTab("chart")}>
+          <ChevronLeft /> Quay lại lá số
+        </Button>
+        {tab === "interpretation" ? <InterpretationView chart={chart} /> : <CalculationDataView chart={chart} />}
+      </div>
+    );
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
       {isDesktop ? (
         <div className="flex h-screen">
           <div className={cn("min-w-0 flex-1 p-3", tab === "chart" ? "overflow-hidden" : "overflow-auto")}>{mainContent}</div>
+          {tab === "chart" && (
           <aside className="no-print flex h-screen w-[360px] shrink-0 flex-col gap-4 overflow-y-auto border-l bg-card/60 p-4">
-            {controlPanel}
-            {tab === "chart" && (
+            {warningsBlock}
+            {(
               <Card>
                 {detail ? (
                   <CardContent className="pt-5">{detail}</CardContent>
@@ -332,6 +455,7 @@ export function ChartWorkspace() {
               </Card>
             )}
           </aside>
+          )}
         </div>
       ) : (
         <div className="space-y-3 p-3">

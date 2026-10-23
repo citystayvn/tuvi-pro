@@ -14,9 +14,12 @@ interface Props {
   selectedStar: ChartStar | null;
   onSelectPalace: (b: number) => void;
   onSelectStar: (s: ChartStar) => void;
+  /** Thanh điều khiển và nội dung thay thế cho ô giữa (không xuất ra ảnh). */
+  centerToolbar?: React.ReactNode;
+  centerBody?: React.ReactNode;
 }
 
-export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ chart, display, selectedBranch, selectedStar, onSelectPalace, onSelectStar }, ref) {
+export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ chart, display, selectedBranch, selectedStar, onSelectPalace, onSelectStar, centerToolbar, centerBody }, ref) {
   const focus = selectedBranch ?? selectedStar?.branch ?? null;
   const tp = focus !== null ? tamPhuongTuChinh(focus) : null;
   const highlightOf = (b: number) => {
@@ -50,7 +53,7 @@ export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ 
         );
       })}
       <div style={{ gridRow: "2 / span 2", gridColumn: "2 / span 2" }} className="min-h-0 min-w-0 overflow-hidden">
-        <ChartCenter chart={chart} />
+        <ChartCenter chart={chart} toolbar={centerToolbar} body={centerBody} />
       </div>
     </div>
   );

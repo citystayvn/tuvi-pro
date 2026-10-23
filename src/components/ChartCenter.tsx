@@ -13,11 +13,17 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function ChartCenter({ chart }: { chart: TuViChart }) {
+export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolbar?: React.ReactNode; body?: React.ReactNode }) {
   const b = chart.birth;
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div className="flex h-full flex-col justify-center bg-gradient-to-br from-card via-card to-accent/40 px-4 py-3 text-[11.5px] leading-snug">
+    <div className="flex h-full flex-col bg-gradient-to-br from-card via-card to-accent/40 px-4 py-3 text-[11.5px] leading-snug">
+      {toolbar && (
+        <div className="no-print mb-2" data-export-hide="1">
+          {toolbar}
+        </div>
+      )}
+      <div className="my-auto">
       <div className="mb-2 text-center">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>
         <div className="mt-0.5 truncate font-serif text-lg font-bold text-foreground">{chart.input.name || "Không tên"}</div>
@@ -25,6 +31,8 @@ export function ChartCenter({ chart }: { chart: TuViChart }) {
           {chart.yinYangGender} · {canChiName(chart.yearStem, chart.yearBranch)}
         </div>
       </div>
+      {body ?? (
+        <>
       <div className="grid gap-x-5 sm:grid-cols-2">
         <div>
           <Row label="Dương lịch" value={`${pad(b.solar.hour)}:${pad(b.solar.minute)} ${pad(b.solar.day)}/${pad(b.solar.month)}/${b.solar.year}`} />
@@ -49,6 +57,9 @@ export function ChartCenter({ chart }: { chart: TuViChart }) {
         </span>
         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{SCHOOLS[chart.input.schoolId]?.config.schoolName}</span>
         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Cục {ELEMENT_NAMES[chart.cuc.element]} · khởi hạn {chart.cuc.number} tuổi</span>
+      </div>
+        </>
+      )}
       </div>
     </div>
   );
