@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
+import { Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
 import { useChartStore } from "@/store/useChartStore";
 import { Button } from "@/components/ui/button";
 import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
-import { analyzePalace, analyzeStar } from "@/core/interpretation";
+import { analyzePalace, analyzeStar, type StarGroupMatch } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
 import { ELEMENT_NAMES } from "@/core/elements";
@@ -103,18 +103,7 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
 
       <Section title="Bộ sao liên quan">
         {a.groups.length ? (
-          <ul className="space-y-1.5">
-            {a.groups.map((g) => (
-              <li key={g.id} className="rounded-lg border p-2 text-sm">
-                <div className="font-semibold">{g.name}</div>
-                <div className="text-xs">
-                  {g.stars.map((id) => getStarDef(id).name).join(", ")}
-                  {g.scope === "giap" && <span className="text-muted-foreground"> · kẹp hai bên cung</span>}
-                </div>
-                <p className="text-xs text-muted-foreground">{g.description}</p>
-              </li>
-            ))}
-          </ul>
+          <GroupList groups={a.groups} />
         ) : (
           <p className="text-sm text-muted-foreground">Không có bộ sao nổi bật trong danh mục đã hỗ trợ.</p>
         )}
@@ -126,8 +115,10 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
   );
 }
 
-export function StarDetail({ chart, star, onSelectStar, onSelectPalace }: { chart: TuViChart; star: ChartStar; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
+export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; star: ChartStar; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
   const a = analyzeStar(chart, star);
+  // Bộ sao (tại tam phương tứ chính của cung) có chứa chính sao này.
+  const starGroups = analyzePalace(chart, star.branch).groups.filter((g) => g.stars.includes(star.id));
   return (
     <div className="space-y-5" data-testid="star-detail">
       <div>
@@ -177,9 +168,11 @@ export function StarDetail({ chart, star, onSelectStar, onSelectPalace }: { char
 
       <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} />
 
-      <Section title="Sao đồng cung & hội chiếu" icon={<ArrowLeftRight className="h-3.5 w-3.5" />}>
-        <ConvergingGroups chart={chart} branch={star.branch} selfLabel="Đồng cung" excludeStar={star} onSelectStar={onSelectStar} onSelectPalace={onSelectPalace} />
-      </Section>
+      {starGroups.length > 0 && (
+        <Section title="Bộ sao liên quan">
+          <GroupList groups={starGroups} />
+        </Section>
+      )}
     </div>
   );
 }
@@ -310,5 +303,22 @@ function StarPalaceNote({ starId, starName, palaceName }: { starId: string; star
         </div>
       )}
     </Section>
+  );
+}
+
+function GroupList({ groups }: { groups: StarGroupMatch[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {groups.map((g) => (
+        <li key={g.id} className="rounded-lg border p-2 text-sm">
+          <div className="font-semibold">{g.name}</div>
+          <div className="text-xs">
+            {g.stars.map((id) => getStarDef(id).name).join(", ")}
+            {g.scope === "giap" && <span className="text-muted-foreground"> · kẹp hai bên cung</span>}
+          </div>
+          <p className="text-xs text-muted-foreground">{g.description}</p>
+        </li>
+      ))}
+    </ul>
   );
 }
