@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
 import { analyzePalace, analyzeStar, starReading, type StarGroupMatch } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
+import { tamPhuongTuChinh } from "@/core/palaces";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
 import { ELEMENT_NAMES } from "@/core/elements";
 import { branchName, canChiName } from "@/core/stems-branches";
@@ -201,7 +202,33 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
         </Section>
       )}
 
-      {star.layer === "natal" && <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} defaultText={cycle?.palaceText ?? undefined} />}
+      {star.layer === "natal" && (
+        <>
+          <StarPalaceNote starId={star.id} starName={star.name} palaceName={a.palace.name} defaultText={cycle?.palaceText ?? undefined} />
+          {(() => {
+            // Sao chiếu sang cung xung chiếu và hai cung tam hợp: dùng ý nghĩa của sao theo tên các cung đó.
+            const tp = tamPhuongTuChinh(star.branch);
+            const related = [
+              { label: "Xung chiếu", b: tp.opposite },
+              { label: "Tam hợp", b: tp.trine[0] },
+              { label: "Tam hợp", b: tp.trine[1] },
+            ];
+            return related.map(({ label, b }) => {
+              const name = chart.palaces[b].name;
+              return (
+                <StarPalaceNote
+                  key={b}
+                  starId={star.id}
+                  starName={star.name}
+                  palaceName={name}
+                  title={`${label} – cung ${name} (${branchName(b)})`}
+                  defaultText={cycle?.data.palaces[name as keyof typeof cycle.data.palaces]}
+                />
+              );
+            });
+          })()}
+        </>
+      )}
 
       {cycle && (cycle.combos.length > 0 || cycle.transformationNotes.length > 0) && (
         <Section title="Tác động của sao đồng cung, hội chiếu">
@@ -305,7 +332,7 @@ function ConvergingGroups({
 }
 
 /** Ý nghĩa của sao tại một cung: dữ liệu luận giải sẵn có (nếu có), người dùng sửa / bổ sung được. */
-function StarPalaceNote({ starId, starName, palaceName, defaultText }: { starId: string; starName: string; palaceName: string; defaultText?: string }) {
+function StarPalaceNote({ starId, starName, palaceName, defaultText, title }: { starId: string; starName: string; palaceName: string; defaultText?: string; title?: string }) {
   const key = `${starId}@${palaceName}`;
   const note = useChartStore((s) => s.starPalaceNotes[key]);
   const setNote = useChartStore((s) => s.setStarPalaceNote);
@@ -333,7 +360,7 @@ function StarPalaceNote({ starId, starName, palaceName, defaultText }: { starId:
   );
 
   return (
-    <Section title={`Ý nghĩa tại cung ${palaceName}`} action={editButton}>
+    <Section title={title ?? `Ý nghĩa tại cung ${palaceName}`} action={editButton}>
       {editing ? (
         <div className="space-y-2">
           <textarea
