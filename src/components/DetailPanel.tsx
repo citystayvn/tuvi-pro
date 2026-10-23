@@ -2,6 +2,7 @@
 import { ArrowLeftRight, Info, Layers, Triangle } from "lucide-react";
 import type { ChartStar, TuViChart } from "@/types/chart";
 import { analyzePalace, analyzeStar } from "@/core/interpretation";
+import { getStarDef } from "@/config/stars/registry";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
 import { ELEMENT_NAMES } from "@/core/elements";
 import { branchName, canChiName } from "@/core/stems-branches";
@@ -144,8 +145,11 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
           <ul className="space-y-1.5">
             {a.groups.map((g) => (
               <li key={g.id} className="rounded-lg border p-2 text-sm">
-                <span className="font-semibold">{g.name}</span>
-                <span className="ml-1 text-xs text-muted-foreground">({g.scope === "giap" ? "giáp cung" : "tam phương tứ chính"})</span>
+                <div className="font-semibold">{g.name}</div>
+                <div className="text-xs">
+                  {g.stars.map((id) => getStarDef(id).name).join(", ")}
+                  {g.scope === "giap" && <span className="text-muted-foreground"> · kẹp hai bên cung</span>}
+                </div>
                 <p className="text-xs text-muted-foreground">{g.description}</p>
               </li>
             ))}
