@@ -11,9 +11,11 @@ interface Props {
   showTransformations: boolean;
   selected?: boolean;
   onSelect?: (s: ChartStar) => void;
+  /** Màn hình hẹp: chính tinh được xuống dòng phần Tứ Hóa thay vì bị cắt chữ. */
+  compact?: boolean;
 }
 
-export function StarItem({ star, size = "aux", showBrightness, showTransformations, selected, onSelect }: Props) {
+export function StarItem({ star, size = "aux", showBrightness, showTransformations, selected, onSelect, compact }: Props) {
   const bright = showBrightness && star.brightness && star.brightness !== "UNDEFINED" ? BRIGHTNESS_SHORT[star.brightness] : "";
   return (
     <button
@@ -26,8 +28,9 @@ export function StarItem({ star, size = "aux", showBrightness, showTransformatio
       }}
       title={`${star.displayName}${star.brightness && star.brightness !== "UNDEFINED" ? ` (${star.brightness})` : ""}`}
       className={cn(
-        "group inline-flex max-w-full items-center gap-0.5 truncate rounded px-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-        size === "main" ? "text-[length:calc(13px*var(--k,1))] font-bold uppercase leading-[calc(16px*var(--k,1))] tracking-wide" : "text-[length:calc(11px*var(--k,1))] font-medium leading-[calc(12.5px*var(--k,1))]",
+        "group inline-flex max-w-full items-center gap-0.5 rounded px-0.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        compact && size === "main" ? "flex-wrap justify-center" : "truncate",
+        size === "main" ? cn("text-[length:calc(13px*var(--k,1))] font-bold uppercase leading-[calc(16px*var(--k,1))]", !compact && "tracking-wide") : "text-[length:calc(11px*var(--k,1))] font-medium leading-[calc(12.5px*var(--k,1))]",
         starTextClass(star),
         selected && "bg-accent ring-1 ring-primary",
       )}

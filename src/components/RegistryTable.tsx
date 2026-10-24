@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronLeft, Search } from "lucide-react";
 import { STAR_REGISTRY, getStarDef } from "@/config/stars/registry";
 import { ELEMENT_NAMES } from "@/core/elements";
 import { BRIGHTNESS_TABLES } from "@/core/brightness";
@@ -33,6 +33,8 @@ export function RegistryTable() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [selected, setSelected] = useState(STAR_REGISTRY[0].id);
+  // Điện thoại: danh sách → chi tiết (một màn hình mỗi lúc).
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const notes = useChartStore((s) => s.starPalaceNotes);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -48,7 +50,7 @@ export function RegistryTable() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-      <Card className="flex flex-col overflow-hidden lg:sticky lg:top-4 lg:max-h-[calc(100vh-8rem)]">
+      <Card className={cn("flex-col overflow-hidden lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100vh-8rem)]", mobileView === "list" ? "flex" : "hidden")}>
         <div className="space-y-2 border-b p-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -63,13 +65,17 @@ export function RegistryTable() {
             ))}
           </NativeSelect>
         </div>
-        <ul className="max-h-64 overflow-y-auto p-1.5 lg:max-h-none lg:flex-1" aria-label="Danh sách sao">
+        <ul className="p-1.5 lg:flex-1 lg:overflow-y-auto" aria-label="Danh sách sao">
           {rows.map((s) => (
             <li key={s.id}>
               <button
-                onClick={() => setSelected(s.id)}
+                onClick={() => {
+                  setSelected(s.id);
+                  setMobileView("detail");
+                  window.scrollTo({ top: 0 });
+                }}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm hover:bg-muted",
+                  "flex w-full items-center gap-2 rounded-md px-2.5 py-2.5 text-left text-[15px] hover:bg-muted lg:py-1.5 lg:text-sm",
                   selected === s.id && "bg-accent font-semibold text-accent-foreground",
                 )}
               >
@@ -83,7 +89,16 @@ export function RegistryTable() {
           {!rows.length && <li className="p-3 text-sm text-muted-foreground">Không tìm thấy sao.</li>}
         </ul>
       </Card>
-      <StarEditor key={selected} id={selected} />
+      <div className={cn("min-w-0 lg:block", mobileView === "detail" ? "block" : "hidden")}>
+        <button
+          type="button"
+          onClick={() => setMobileView("list")}
+          className="mb-2 inline-flex items-center gap-1 rounded-lg px-1 py-1.5 text-sm font-medium text-primary lg:hidden"
+        >
+          <ChevronLeft className="h-4 w-4" /> Danh sách sao
+        </button>
+        <StarEditor key={selected} id={selected} />
+      </div>
     </div>
   );
 }

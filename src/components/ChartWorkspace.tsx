@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, Link2, Pencil, Printer, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, Link2, MoreHorizontal, Pencil, Printer, SlidersHorizontal } from "lucide-react";
 import { buildChart, type ChartRequest } from "@/core/chart/buildChart";
 import { CalendarInputError } from "@/core/calendar";
 import type { ChartStar } from "@/types/chart";
-import { branchName, canChiName, yearBranch, yearStem } from "@/core/stems-branches";
+import { canChiName, yearBranch, yearStem } from "@/core/stems-branches";
 import { searchParamsToRequest, requestToSearchParams } from "@/utils/chart-url";
 import { exportPdf, exportPng } from "@/utils/export";
 import { useChartStore } from "@/store/useChartStore";
@@ -16,7 +16,6 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { TuViChart } from "./TuViChart";
-import { ChartControls } from "./ChartControls";
 import { CenterEditForm } from "./CenterEditForm";
 import { Switch } from "./ui/switch";
 import { PalaceDetail, StarDetail } from "./DetailPanel";
@@ -28,6 +27,10 @@ const BASE_WIDTH = 920;
 const BASE_HEIGHT = 945;
 /** Chiều rộng tối thiểu để vẽ lá số; màn hình hẹp hơn thì thu nhỏ cả lá số. */
 const MIN_WIDTH = 620;
+/** Điện thoại: ô cung xếp phụ tinh 1 cột nên vẽ được ở khung hẹp hơn, chữ to hơn. */
+const MOBILE_MIN_WIDTH = 400;
+/** Điện thoại: lá số cao tối thiểu = rộng × hệ số này (trang được cuộn thêm một chút). */
+const MOBILE_MIN_ASPECT = 2.35;
 /** Lá số mở sẵn khi chưa nhập thông tin. */
 const DEFAULT_REQUEST: ChartRequest = {
   name: "",
@@ -80,6 +83,10 @@ export function ChartWorkspace() {
   const isDesktop = useIsDesktop();
   // Từ 768px trở lên, thanh điều khiển nằm trong ô giữa lá số (trang không cuộn).
   const centerControls = useMediaQuery("(min-width: 768px)");
+  const compact = !centerControls;
+  const minWidthRef = useRef(MIN_WIDTH);
+  minWidthRef.current = compact ? MOBILE_MIN_WIDTH : MIN_WIDTH;
+  const [mobileSheet, setMobileSheet] = useState<"display" | "more" | null>(null);
 
   useEffect(() => {
     if (request?.viewYear) setViewYear(request.viewYear);
@@ -106,15 +113,16 @@ export function ChartWorkspace() {
     if (!el) return;
     const w = el.clientWidth;
     const top = el.getBoundingClientRect().top + window.scrollY;
-    const h = window.innerHeight - top - 12;
+    const avail = window.innerHeight - top - 12;
+    const h = minWidthRef.current === MOBILE_MIN_WIDTH ? Math.max(avail, w * MOBILE_MIN_ASPECT) : avail;
     if (w <= 0 || h <= 0) return;
     // Lá số luôn lấp đúng khung; chỉ thu nhỏ toàn bộ khi khung hẹp hơn MIN_WIDTH.
-    const zoom = Math.min(1, w / MIN_WIDTH);
+    const zoom = Math.min(1, w / minWidthRef.current);
     setBox({ zoom, w: w / zoom, h: h / zoom });
   }, []);
   useLayoutEffect(() => {
     fit();
-  }, [fit, result?.ok, isDesktop]);
+  }, [fit, result?.ok, isDesktop, compact]);
   useEffect(() => {
     const el = viewportRef.current;
     window.addEventListener("resize", fit);
@@ -181,7 +189,6 @@ export function ChartWorkspace() {
   }
 
   const chart = result.chart;
-  const title = chart.input.name || "Lá số Tử Vi";
 
   const onSelectPalace = (b: number) => {
     setSelectedStar(null);
@@ -258,48 +265,6 @@ export function ChartWorkspace() {
         )}
       </div>
     ) : null;
-
-  const actions = (
-    <div className={cn("grid gap-1", IS_ARTIFACT ? "grid-cols-2" : "grid-cols-6 xl:grid-cols-3")}>
-      <Button variant="outline" size="sm" onClick={() => setCenterMode("edit")} aria-label="Sửa" title="Sửa thông tin">
-        <Pencil /> <span className="hidden sm:inline">Sửa</span>
-      </Button>
-      <Button variant="outline" size="sm" onClick={save} aria-label="Lưu" title="Lưu lá số">
-        <Bookmark /> <span className="hidden sm:inline">Lưu</span>
-      </Button>
-      {!IS_ARTIFACT && (
-        <>
-      <Button variant="outline" size="sm" onClick={copyLink} aria-label="Chia sẻ" title="Sao chép liên kết">
-        <Link2 /> <span className="hidden sm:inline">Chia sẻ</span>
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => doExport("png")} disabled={busy} aria-label="PNG" title="Xuất ảnh PNG">
-        <Download /> <span className="hidden sm:inline">PNG</span>
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => doExport("pdf")} disabled={busy} aria-label="PDF" title="Xuất PDF">
-        <FileDown /> <span className="hidden sm:inline">PDF</span>
-      </Button>
-      <Button size="sm" onClick={() => window.print()} aria-label="In" title="In lá số">
-        <Printer /> <span className="hidden sm:inline">In</span>
-      </Button>
-        </>
-      )}
-    </div>
-  );
-
-  // Toàn bộ thông tin & điều khiển nằm ở cột phải (desktop) hoặc phía trên (màn hình nhỏ).
-  const controlPanel = (
-    <div className="no-print space-y-3">
-      <div>
-        <h1 className="truncate text-lg font-semibold leading-tight">{title}</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {chart.yinYangGender} · {chart.banMenh.name} · {chart.cuc.name} · Mệnh tại {branchName(chart.menhBranch)}, Thân cư {chart.thanPalaceName}
-        </p>
-      </div>
-      {actions}
-      {<ChartControls viewYear={viewYear} onViewYear={changeYear} display={display} onDisplay={setDisplay} inline />}
-      {warningsBlock}
-    </div>
-  );
 
   const reload = (next: ChartRequest) => {
     setCenterMode("info");
@@ -413,6 +378,79 @@ export function ChartWorkspace() {
       </div>
     ) : undefined;
 
+  const mBtn = "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-card text-foreground active:bg-accent [&_svg]:h-[18px] [&_svg]:w-[18px]";
+  const mobileToolbar = (
+    <div className="no-print sticky top-14 z-20 flex items-center gap-1.5 border-b bg-background/95 px-2 py-1.5 backdrop-blur">
+      <div className="flex min-w-0 flex-1 items-center rounded-lg border bg-card">
+        <button type="button" className="flex h-9 w-9 shrink-0 items-center justify-center active:bg-accent" onClick={() => changeYear(viewYear - 1)} aria-label="Năm trước">
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
+          <input
+            aria-label="Năm xem hạn"
+            inputMode="numeric"
+            className="h-8 w-[3.6rem] rounded-md bg-transparent text-center text-base font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
+            value={viewYear}
+            onChange={(e) => {
+              const v = Number(e.target.value.replace(/\D/g, ""));
+              if (v >= 1800 && v <= 2199) changeYear(v);
+            }}
+          />
+          <span className="truncate text-xs font-medium text-muted-foreground">{canChiName(yearStem(viewYear), yearBranch(viewYear))}</span>
+        </div>
+        <button type="button" className="flex h-9 w-9 shrink-0 items-center justify-center active:bg-accent" onClick={() => changeYear(viewYear + 1)} aria-label="Năm sau">
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <button type="button" className={mBtn} onClick={save} aria-label="Lưu" title="Lưu lá số">
+        <Bookmark />
+      </button>
+      <button type="button" className={mBtn} onClick={() => setMobileSheet("display")} aria-label="Hiển thị" title="Tuỳ chọn hiển thị">
+        <SlidersHorizontal />
+      </button>
+      {!IS_ARTIFACT && (
+        <button type="button" className={mBtn} onClick={() => setMobileSheet("more")} aria-label="Thêm" title="Chia sẻ, xuất file, in">
+          <MoreHorizontal />
+        </button>
+      )}
+    </div>
+  );
+  const sheetRow = "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[15px] font-medium active:bg-accent disabled:opacity-50 [&_svg]:h-5 [&_svg]:w-5 [&_svg]:text-muted-foreground";
+  const mobileSheets = compact && (
+    <Sheet open={mobileSheet !== null} onOpenChange={(o) => !o && setMobileSheet(null)}>
+      {mobileSheet === "display" && (
+        <SheetContent side="bottom" title="Hiển thị">
+          <div className="divide-y">
+            {DISPLAY_TOGGLES.map((t) => (
+              <label key={t.key} className="flex items-center justify-between gap-3 py-3 text-[15px]">
+                {t.label}
+                <Switch checked={display[t.key] as boolean} onCheckedChange={(v) => setDisplay({ [t.key]: v })} aria-label={t.label} />
+              </label>
+            ))}
+          </div>
+        </SheetContent>
+      )}
+      {mobileSheet === "more" && (
+        <SheetContent side="bottom" title="Thêm">
+          <div className="space-y-0.5">
+            <button type="button" className={sheetRow} onClick={copyLink} aria-label="Chia sẻ">
+              <Link2 /> Sao chép liên kết
+            </button>
+            <button type="button" className={sheetRow} onClick={() => doExport("png")} disabled={busy} aria-label="PNG">
+              <Download /> Xuất ảnh PNG
+            </button>
+            <button type="button" className={sheetRow} onClick={() => doExport("pdf")} disabled={busy} aria-label="PDF">
+              <FileDown /> Xuất PDF
+            </button>
+            <button type="button" className={sheetRow} onClick={() => window.print()} aria-label="In">
+              <Printer /> In lá số
+            </button>
+          </div>
+        </SheetContent>
+      )}
+    </Sheet>
+  );
+
   const chartView = (
     <div ref={viewportRef} className="relative w-full overflow-hidden" style={{ height: box.h * box.zoom }} onClick={clearSelection}>
       <div>
@@ -426,7 +464,8 @@ export function ChartWorkspace() {
             onSelectPalace={onSelectPalace}
             onSelectStar={onSelectStar}
             centerToolbar={centerControls ? centerToolbar : undefined}
-            centerNameAction={centerControls ? nameAction : undefined}
+            centerNameAction={nameAction}
+            compact={compact}
             centerBody={centerControls ? centerBody : undefined}
           />
         </div>
@@ -466,12 +505,21 @@ export function ChartWorkspace() {
           )}
         </div>
       ) : (
-        <div className="space-y-3 p-3">
-          {mainContent}
-          {!centerControls && controlPanel}
-          {!centerControls && <Legend />}
+        <div>
+          {compact && mobileToolbar}
+          <div className={compact ? "px-1.5 pt-1.5" : "p-3"}>{mainContent}</div>
+          {compact && (
+            <div className="space-y-2 px-3 pb-6 pt-3">
+              {warningsBlock}
+              <Legend />
+            </div>
+          )}
           <Sheet open={!!detail} onOpenChange={(o) => !o && clearSelection()}>
-            {detail && <SheetContent title={selectedStar ? selectedStar.displayName : `Cung ${chart.palaces[selectedBranch!].name}`}>{detail}</SheetContent>}
+            {detail && (
+              <SheetContent side={compact ? "bottom" : "right"} title={selectedStar ? selectedStar.displayName : `Cung ${chart.palaces[selectedBranch!].name}`}>
+                {detail}
+              </SheetContent>
+            )}
           </Sheet>
         </div>
       )}
@@ -479,7 +527,7 @@ export function ChartWorkspace() {
       {!centerControls && (
         <Sheet open={centerMode === "edit"} onOpenChange={(o) => !o && setCenterMode("info")}>
           {centerMode === "edit" && (
-            <SheetContent title="Sửa thông tin">
+            <SheetContent side="bottom" title="Sửa thông tin">
               <CenterEditForm request={{ ...request, viewYear }} calendarRules={chart.rules.calendar} onSubmit={reload} onCancel={() => setCenterMode("info")} onAdvanced={() => setAdvancedOpen(true)} />
             </SheetContent>
           )}
@@ -487,7 +535,7 @@ export function ChartWorkspace() {
       )}
       <Sheet open={advancedOpen} onOpenChange={setAdvancedOpen}>
         {advancedOpen && (
-          <SheetContent title="Thông tin & cấu hình nâng cao" className="max-w-2xl">
+          <SheetContent side={compact ? "bottom" : "right"} title="Thông tin & cấu hình nâng cao" className={compact ? undefined : "max-w-2xl"}>
             <BirthForm
               initial={{ ...request, viewYear }}
               onDone={() => {
@@ -499,6 +547,7 @@ export function ChartWorkspace() {
         )}
       </Sheet>
 
+      {mobileSheets}
       {toast && (
         <div role="status" className="no-print fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-sm text-background shadow-lg animate-fade-in">
           {toast}

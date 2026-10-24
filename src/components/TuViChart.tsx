@@ -19,9 +19,11 @@ interface Props {
   /** Nút cạnh tên ở giữa lá số (sửa thông tin). */
   centerNameAction?: React.ReactNode;
   centerBody?: React.ReactNode;
+  /** Bố cục gọn cho màn hình điện thoại. */
+  compact?: boolean;
 }
 
-export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ chart, display, selectedBranch, selectedStar, onSelectPalace, onSelectStar, centerToolbar, centerNameAction, centerBody }, ref) {
+export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ chart, display, selectedBranch, selectedStar, onSelectPalace, onSelectStar, centerToolbar, centerNameAction, centerBody, compact }, ref) {
   const focus = selectedBranch ?? selectedStar?.branch ?? null;
   const innerRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -65,12 +67,13 @@ export const TuViChart = forwardRef<HTMLDivElement, Props>(function TuViChart({ 
               selectedStarId={selectedStar?.branch === p.branch ? selectedStar.id : undefined}
               onSelectPalace={onSelectPalace}
               onSelectStar={onSelectStar}
+              compact={compact}
             />
           </div>
         );
       })}
       <div style={{ gridRow: "2 / span 2", gridColumn: "2 / span 2" }} className="min-h-0 min-w-0 overflow-hidden">
-        <ChartCenter chart={chart} toolbar={centerToolbar} nameAction={centerNameAction} body={centerBody} />
+        <ChartCenter chart={chart} toolbar={centerToolbar} nameAction={centerNameAction} body={centerBody} compact={compact} />
       </div>
       <PalaceArrows from={focus ?? chart.menhBranch} width={size.w} height={size.h} />
     </div>

@@ -93,6 +93,8 @@ test("Trang danh mục sao", async ({ page }) => {
   await page.getByRole("button", { name: /Thiên Tài/ }).click();
   await expect(editor).toContainText("Anh chị em giỏi giang");
   // Sửa tính chất ở danh mục → lá số dùng nội dung mới.
+  const back = page.getByRole("button", { name: "Danh sách sao" });
+  if (await back.isVisible()) await back.click();
   await page.getByLabel("Tìm sao").fill("Tử Vi");
   await page.getByRole("button", { name: /^Tử Vi/ }).click();
   await editor.getByRole("button", { name: "Sửa ý nghĩa" }).first().click();
@@ -106,6 +108,8 @@ test("Trang danh mục sao", async ({ page }) => {
 test("Xuất PNG và PDF", async ({ page }) => {
   await page.goto(CHART_URL);
   await expect(page.getByTestId("tuvi-chart")).toBeVisible();
+  const more = page.getByRole("button", { name: "Thêm" });
+  if (await more.isVisible()) await more.click();
   const [png] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PNG" }).click()]);
   expect(png.suggestedFilename()).toBe("tuvi-nguyen-van-a.png");
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF" }).click()]);

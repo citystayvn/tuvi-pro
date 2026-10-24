@@ -2,6 +2,7 @@ import type { TuViChart } from "@/types/chart";
 import { canChiName } from "@/core/stems-branches";
 import { SCHOOLS } from "@/config/schools";
 import { formatTz } from "@/utils/places";
+import { cn } from "@/utils/cn";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -12,11 +13,11 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function ChartCenter({ chart, toolbar, nameAction, body }: { chart: TuViChart; toolbar?: React.ReactNode; nameAction?: React.ReactNode; body?: React.ReactNode }) {
+export function ChartCenter({ chart, toolbar, nameAction, body, compact }: { chart: TuViChart; toolbar?: React.ReactNode; nameAction?: React.ReactNode; body?: React.ReactNode; compact?: boolean }) {
   const b = chart.birth;
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div data-center className="flex h-full flex-col overflow-hidden bg-paper-center px-4 py-3 text-[length:calc(11.5px*var(--k,1))] leading-snug">
+    <div data-center className={cn("flex h-full flex-col overflow-hidden bg-paper-center text-[length:calc(11.5px*var(--k,1))] leading-snug", compact ? "px-2 py-1.5" : "px-4 py-3")}>
       {toolbar && (
         <div className="no-print mb-2" data-export-hide="1">
           {toolbar}
@@ -24,7 +25,7 @@ export function ChartCenter({ chart, toolbar, nameAction, body }: { chart: TuViC
       )}
       <div className="my-auto">
       <div className="mb-2 text-center">
-        <div className="text-[length:calc(10px*var(--k,1))] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>
+        {!compact && <div className="text-[length:calc(10px*var(--k,1))] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>}
         <div className="mt-0.5 flex items-center justify-center gap-1">
           <span className="truncate font-serif text-[length:calc(18px*var(--k,1))] font-bold text-foreground">{chart.input.name || "Không tên"}</span>
           {nameAction && (
@@ -44,19 +45,23 @@ export function ChartCenter({ chart, toolbar, nameAction, body }: { chart: TuViC
           <Row label="Dương lịch" value={`${pad(b.solar.hour)}:${pad(b.solar.minute)} ${pad(b.solar.day)}/${pad(b.solar.month)}/${b.solar.year}${b.solar.timeZone !== 7 ? ` (${formatTz(b.solar.timeZone)})` : ""}`} />
           <Row label="Âm lịch" value={`${b.lunar.day}/${b.lunar.month}${b.lunar.isLeapMonth ? " nhuận" : ""}/${b.lunar.year}`} />
           <Row label="Năm" value={canChiName(b.pillars.year.stem, b.pillars.year.branch)} />
-          <Row label="Tháng" value={canChiName(b.pillars.month.stem, b.pillars.month.branch)} />
-          <Row label="Ngày" value={canChiName(b.pillars.day.stem, b.pillars.day.branch)} />
-          <Row label="Giờ" value={canChiName(b.pillars.hour.stem, b.pillars.hour.branch)} />
-          {chart.input.birthPlace && <Row label="Nơi sinh" value={chart.input.birthPlace} />}
+          {!compact && (
+            <>
+              <Row label="Tháng" value={canChiName(b.pillars.month.stem, b.pillars.month.branch)} />
+              <Row label="Ngày" value={canChiName(b.pillars.day.stem, b.pillars.day.branch)} />
+              <Row label="Giờ" value={canChiName(b.pillars.hour.stem, b.pillars.hour.branch)} />
+              {chart.input.birthPlace && <Row label="Nơi sinh" value={chart.input.birthPlace} />}
+            </>
+          )}
         </div>
         <div>
           <Row label="Bản Mệnh" value={chart.banMenh.name} />
           <Row label="Cục" value={chart.cuc.name} />
-          <Row label="Mệnh – Cục" value={chart.menhCucRelation} />
+          {!compact && <Row label="Mệnh – Cục" value={chart.menhCucRelation} />}
           <Row label="Chủ Mệnh" value={chart.chuMenh} />
           <Row label="Chủ Thân" value={chart.chuThan} />
           <Row label="Thân cư" value={chart.thanPalaceName} />
-          <Row label={`Tuổi năm ${chart.period.viewYear}`} value={`${chart.period.nominalAge} tuổi`} />
+          <Row label={compact ? `Tuổi ${chart.period.viewYear}` : `Tuổi năm ${chart.period.viewYear}`} value={`${chart.period.nominalAge} tuổi`} />
         </div>
       </div>
         </>

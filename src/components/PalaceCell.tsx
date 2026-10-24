@@ -19,9 +19,11 @@ interface Props {
   selectedStarId?: string;
   onSelectPalace: (b: number) => void;
   onSelectStar: (s: ChartStar) => void;
+  /** Màn hình hẹp: phụ tinh xếp 1 cột (cát trước, sát sau) để chữ được to hơn. */
+  compact?: boolean;
 }
 
-export function PalaceCell({ palace, period, display, selected, highlighted, selectedStarId, onSelectPalace, onSelectStar }: Props) {
+export function PalaceCell({ palace, period, display, selected, highlighted, selectedStarId, onSelectPalace, onSelectStar, compact }: Props) {
   const natal = palace.stars.filter((s) => s.layer === "natal");
   const main = natal.filter((s) => s.category === "main");
   const aux = natal.filter((s) => {
@@ -61,51 +63,76 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
         selected && "ring-2 ring-inset ring-primary",
       )}
     >
+      {compact ? (
+        <>
+          <div className="flex min-w-0 items-center justify-center gap-0.5">
+            <span className={cn("truncate text-[length:calc(12px*var(--k,1))] font-bold uppercase leading-[1.25]", ELEMENT_TEXT[BRANCH_ELEMENTS[palace.branch]])}>{palace.name}</span>
+            {palace.isThan && <span className="rounded-sm bg-ink px-0.5 text-[length:calc(8.5px*var(--k,1))] font-bold leading-[calc(13px*var(--k,1))] text-paper" title="Cung Thân">THÂN</span>}
+          </div>
+          <div className="mt-0.5 flex items-center justify-between gap-0.5 text-[length:calc(9.5px*var(--k,1))] leading-none text-ink/80">
+            <span className="font-semibold text-ink">{STEMS[palace.stem][0]}.{branchName(palace.branch)}</span>
+            <span>{palace.branch % 2 === 0 ? "+" : "−"}{ELEMENT_NAMES[BRANCH_ELEMENTS[palace.branch]]}</span>
+            <span className="font-bold tabular-nums text-ink">{palace.majorPeriod.startAge}</span>
+          </div>
+          {(isMajor || isMinor || isAnnual || palace.hasTuan || palace.hasTriet) && (
+            <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 text-[length:calc(9px*var(--k,1))] leading-none">
+              {isMajor && <span className="rounded-sm bg-decadal/15 px-0.5 font-bold leading-[calc(12px*var(--k,1))] text-decadal">Đại hạn</span>}
+              {isMinor && <span className="rounded-sm bg-emerald-600/15 px-0.5 font-bold leading-[calc(12px*var(--k,1))] text-emerald-700 dark:text-emerald-400">Tiểu hạn</span>}
+              {isAnnual && <span className="rounded-sm bg-annual/15 px-0.5 font-bold leading-[calc(12px*var(--k,1))] text-annual">Lưu niên</span>}
+              {palace.hasTuan && <span className="rounded-sm bg-ink px-0.5 font-semibold leading-[calc(12px*var(--k,1))] text-paper">Tuần</span>}
+              {palace.hasTriet && <span className="rounded-sm bg-ink px-0.5 font-semibold leading-[calc(12px*var(--k,1))] text-paper">Triệt</span>}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
       {/* Header: Can.Chi – tên cung (màu ngũ hành của cung) – tuổi đại hạn */}
-      <div className="grid grid-cols-[auto_1fr_auto] items-start gap-1 leading-none">
-        <span className="text-[length:calc(10.5px*var(--k,1))] font-semibold text-ink">
-          {STEMS[palace.stem][0]}.{branchName(palace.branch)}
-        </span>
-        <span className="flex min-w-0 items-center justify-center gap-1">
-          <span className={cn("truncate text-[length:calc(12.5px*var(--k,1))] font-bold uppercase", ELEMENT_TEXT[BRANCH_ELEMENTS[palace.branch]])}>{palace.name}</span>
-          {palace.isThan && <span className="rounded-sm bg-ink px-1 text-[length:calc(9px*var(--k,1))] font-bold leading-[calc(14px*var(--k,1))] text-paper" title="Cung Thân">THÂN</span>}
-        </span>
-        <span className="text-[length:calc(11px*var(--k,1))] font-bold tabular-nums text-ink">{palace.majorPeriod.startAge}</span>
-      </div>
-      <div className="mt-0.5 grid grid-cols-[auto_1fr_auto] items-center gap-1 text-[length:calc(10px*var(--k,1))] leading-none">
-        <span className="font-medium text-ink/80">
-          {palace.branch % 2 === 0 ? "+" : "−"}
-          {ELEMENT_NAMES[BRANCH_ELEMENTS[palace.branch]]}
-        </span>
-        <span className="flex flex-wrap justify-center gap-0.5">
-          {isMajor && <span className="rounded-sm bg-decadal/15 px-1 font-bold leading-[calc(13px*var(--k,1))] text-decadal">Đại hạn</span>}
-          {isMinor && <span className="rounded-sm bg-emerald-600/15 px-1 font-bold leading-[calc(13px*var(--k,1))] text-emerald-700 dark:text-emerald-400">Tiểu hạn</span>}
-          {isAnnual && <span className="rounded-sm bg-annual/15 px-1 font-bold leading-[calc(13px*var(--k,1))] text-annual">Lưu niên</span>}
-          {palace.hasTuan && <span className="rounded-sm bg-ink px-1 font-semibold leading-[calc(13px*var(--k,1))] text-paper">Tuần</span>}
-          {palace.hasTriet && <span className="rounded-sm bg-ink px-1 font-semibold leading-[calc(13px*var(--k,1))] text-paper">Triệt</span>}
-        </span>
-        <span className="text-ink/60" title="Tiểu hạn: năm có địa chi này">
-          {branchName(palace.minorPeriodYearBranch)}
-        </span>
-      </div>
+        <div className="grid grid-cols-[auto_1fr_auto] items-start gap-1 leading-none">
+          <span className="text-[length:calc(10.5px*var(--k,1))] font-semibold text-ink">
+            {STEMS[palace.stem][0]}.{branchName(palace.branch)}
+          </span>
+          <span className="flex min-w-0 items-center justify-center gap-1">
+            <span className={cn("truncate text-[length:calc(12.5px*var(--k,1))] font-bold uppercase", ELEMENT_TEXT[BRANCH_ELEMENTS[palace.branch]])}>{palace.name}</span>
+            {palace.isThan && <span className="rounded-sm bg-ink px-1 text-[length:calc(9px*var(--k,1))] font-bold leading-[calc(14px*var(--k,1))] text-paper" title="Cung Thân">THÂN</span>}
+          </span>
+          <span className="text-[length:calc(11px*var(--k,1))] font-bold tabular-nums text-ink">{palace.majorPeriod.startAge}</span>
+        </div>
+        <div className="mt-0.5 grid grid-cols-[auto_1fr_auto] items-center gap-1 text-[length:calc(10px*var(--k,1))] leading-none">
+          <span className="font-medium text-ink/80">
+            {palace.branch % 2 === 0 ? "+" : "−"}
+            {ELEMENT_NAMES[BRANCH_ELEMENTS[palace.branch]]}
+          </span>
+          <span className="flex flex-wrap justify-center gap-0.5">
+            {isMajor && <span className="rounded-sm bg-decadal/15 px-1 font-bold leading-[calc(13px*var(--k,1))] text-decadal">Đại hạn</span>}
+            {isMinor && <span className="rounded-sm bg-emerald-600/15 px-1 font-bold leading-[calc(13px*var(--k,1))] text-emerald-700 dark:text-emerald-400">Tiểu hạn</span>}
+            {isAnnual && <span className="rounded-sm bg-annual/15 px-1 font-bold leading-[calc(13px*var(--k,1))] text-annual">Lưu niên</span>}
+            {palace.hasTuan && <span className="rounded-sm bg-ink px-1 font-semibold leading-[calc(13px*var(--k,1))] text-paper">Tuần</span>}
+            {palace.hasTriet && <span className="rounded-sm bg-ink px-1 font-semibold leading-[calc(13px*var(--k,1))] text-paper">Triệt</span>}
+          </span>
+          <span className="text-ink/60" title="Tiểu hạn: năm có địa chi này">
+            {branchName(palace.minorPeriodYearBranch)}
+          </span>
+        </div>
+        </>
+      )}
 
       {/* Chính tinh */}
       <div className="mt-0.5 flex min-h-[16px] flex-col items-center">
         {main.length === 0 ? (
           <span className="text-[length:calc(10px*var(--k,1))] italic text-ink/50">Vô chính diệu</span>
         ) : (
-          main.map((s) => <StarItem key={s.id} star={s} size="main" selected={selectedStarId === s.id} {...starProps} />)
+          main.map((s) => <StarItem key={s.id} star={s} size="main" compact={compact} selected={selectedStarId === s.id} {...starProps} />)
         )}
       </div>
 
       {/* Phụ tinh: cát (trái) – sát/hung (phải) */}
-      <div className="mt-0.5 grid min-h-0 flex-1 grid-cols-2 gap-x-1 overflow-hidden">
+      <div className={cn("mt-0.5 grid min-h-0 flex-1 gap-x-1 overflow-hidden", compact ? "grid-cols-1 content-start" : "grid-cols-2")}>
         <div className="flex min-w-0 flex-col">
           {good.map((s) => (
             <StarItem key={s.id + s.layer} star={s} selected={selectedStarId === s.id} {...starProps} />
           ))}
         </div>
-        <div className="flex min-w-0 flex-col items-end text-right">
+        <div className={cn("flex min-w-0 flex-col", !compact && "items-end text-right")}>
           {bad.map((s) => (
             <StarItem key={s.id + s.layer} star={s} selected={selectedStarId === s.id} {...starProps} />
           ))}
@@ -113,13 +140,13 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
       </div>
 
       {showCycles && cycleStars.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-1">
+        <div className={cn("grid gap-x-1", compact ? "grid-cols-1" : "grid-cols-2")}>
           <div className="flex min-w-0 flex-col">
             {cycleStars.filter((s) => s.nature !== "bad").map((s) => (
               <StarItem key={s.id} star={s} selected={selectedStarId === s.id} {...starProps} />
             ))}
           </div>
-          <div className="flex min-w-0 flex-col items-end text-right">
+          <div className={cn("flex min-w-0 flex-col", !compact && "items-end text-right")}>
             {cycleStars.filter((s) => s.nature === "bad").map((s) => (
               <StarItem key={s.id} star={s} selected={selectedStarId === s.id} {...starProps} />
             ))}
@@ -138,11 +165,21 @@ export function PalaceCell({ palace, period, display, selected, highlighted, sel
       )}
 
       {/* Footer: cung tính theo đại vận – Tràng Sinh – cung tính theo lưu niên */}
-      <div className="mt-0.5 grid grid-cols-[1fr_auto_1fr] items-end gap-1 text-[length:calc(10.5px*var(--k,1))] font-medium leading-none text-ink">
-        <span title="Tên cung tính theo đại vận hiện tại">{period.majorPeriod ? `ĐV.${PALACE_SHORT[mod(period.majorPeriod.branch - palace.branch, 12)]}` : ""}</span>
-        <span className="font-semibold">{display.showTrangSinh ? palace.trangSinh : ""}</span>
-        <span className="text-right" title="Tên cung tính theo năm xem hạn">LN.{PALACE_SHORT[mod(period.annualBranch - palace.branch, 12)]}</span>
-      </div>
+      {compact ? (
+        <div className="mt-0.5 text-[length:calc(9.5px*var(--k,1))] font-medium leading-tight text-ink">
+          {display.showTrangSinh && <div className="truncate text-center font-semibold">{palace.trangSinh}</div>}
+          <div className="flex justify-between gap-1">
+            <span className="truncate" title="Tên cung tính theo đại vận hiện tại">{period.majorPeriod ? `ĐV.${PALACE_SHORT[mod(period.majorPeriod.branch - palace.branch, 12)]}` : ""}</span>
+            <span className="truncate text-right" title="Tên cung tính theo năm xem hạn">LN.{PALACE_SHORT[mod(period.annualBranch - palace.branch, 12)]}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-0.5 grid grid-cols-[1fr_auto_1fr] items-end gap-1 text-[length:calc(10.5px*var(--k,1))] font-medium leading-none text-ink">
+          <span title="Tên cung tính theo đại vận hiện tại">{period.majorPeriod ? `ĐV.${PALACE_SHORT[mod(period.majorPeriod.branch - palace.branch, 12)]}` : ""}</span>
+          <span className="font-semibold">{display.showTrangSinh ? palace.trangSinh : ""}</span>
+          <span className="text-right" title="Tên cung tính theo năm xem hạn">LN.{PALACE_SHORT[mod(period.annualBranch - palace.branch, 12)]}</span>
+        </div>
+      )}
       </div>
 
     </div>
