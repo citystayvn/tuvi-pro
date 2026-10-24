@@ -196,6 +196,11 @@ export interface StarReading {
   transformationNotes: string[];
 }
 
+/** Dữ liệu luận giải gốc của một sao (null nếu chưa có). */
+export function getStarInterpretation(id: string): { data: StarInterpretationData; groupLabel: string } | null {
+  return INTERPRETATION_BY_ID[id] ?? null;
+}
+
 /** Đã có cơ sở dữ liệu luận giải cho sao này chưa. */
 export function hasStarInterpretation(id: string): boolean {
   return id in INTERPRETATION_BY_ID;

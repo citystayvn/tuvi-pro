@@ -1,10 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Check, Info, Layers, PencilLine, Trash2 } from "lucide-react";
-import { useChartStore } from "@/store/useChartStore";
-import { Button } from "@/components/ui/button";
+import { Info, Layers } from "lucide-react";
+import { palaceNoteKey, traitNoteKey, useStarNote } from "@/store/useChartStore";
+import { EditableNote } from "./EditableNote";
 import type { ChartPalace, ChartStar, TuViChart } from "@/types/chart";
-import { analyzePalace, analyzeStar, starReading, type StarGroupMatch } from "@/core/interpretation";
+import { analyzePalace, analyzeStar, starReading, type StarGroupMatch, type StarReading } from "@/core/interpretation";
 import { getStarDef } from "@/config/stars/registry";
 import { tamPhuongTuChinh } from "@/core/palaces";
 import { BRIGHTNESS_LABEL } from "@/core/brightness";
@@ -117,11 +116,27 @@ export function PalaceDetail({ chart, branch, onSelectStar, onSelectPalace }: { 
   );
 }
 
+/** Tính chất của sao, ưu tiên nội dung người dùng đã sửa trong Danh mục sao. */
+function useTraits(id: string, r: StarReading | null) {
+  const core = useStarNote(traitNoteKey(id, "core"));
+  const positive = useStarNote(traitNoteKey(id, "positive"));
+  const negative = useStarNote(traitNoteKey(id, "negative"));
+  const fav = useStarNote(traitNoteKey(id, "favorable"));
+  const unfav = useStarNote(traitNoteKey(id, "unfavorable"));
+  return {
+    core: core ?? r?.data.core,
+    positive: positive ?? r?.data.positive,
+    negative: negative ?? r?.data.negative,
+    position: r?.positionText ? (r.brightnessRule === "HAM" ? unfav : fav) ?? r.positionText : null,
+  };
+}
+
 export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; star: ChartStar; onSelectStar: (s: ChartStar) => void; onSelectPalace: (b: number) => void }) {
   const a = analyzeStar(chart, star);
   // Bộ sao (tại tam phương tứ chính của cung) có chứa chính sao này.
   const starGroups = analyzePalace(chart, star.branch).groups.filter((g) => g.stars.includes(star.id));
   const cycle = starReading(chart, star);
+  const trait = useTraits(star.id, cycle);
   return (
     <div className="space-y-5" data-testid="star-detail">
       <div>
@@ -175,20 +190,20 @@ export function StarDetail({ chart, star, onSelectPalace }: { chart: TuViChart; 
       {cycle ? (
         <>
           <Section title="Tính chất">
-            <p className="text-sm">{cycle.data.core}</p>
+            <p className="text-sm">{trait.core}</p>
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="rounded-lg bg-emerald-50 p-2 text-sm dark:bg-emerald-950/40">
                 <div className="text-[11px] font-semibold text-good">Mặt tích cực</div>
-                {cycle.data.positive}
+                {trait.positive}
               </div>
               <div className="rounded-lg bg-rose-50 p-2 text-sm dark:bg-rose-950/40">
                 <div className="text-[11px] font-semibold text-bad">Mặt tiêu cực</div>
-                {cycle.data.negative}
+                {trait.negative}
               </div>
             </div>
           </Section>
-          {cycle.positionText && (
-            <p className={cn("rounded-lg border-l-2 bg-muted/40 p-2 text-sm", cycle.brightnessRule === "HAM" ? "border-bad" : "border-good")}>{cycle.positionText}</p>
+          {trait.position && (
+            <p className={cn("rounded-lg border-l-2 bg-muted/40 p-2 text-sm", cycle.brightnessRule === "HAM" ? "border-bad" : "border-good")}>{trait.position}</p>
           )}
           {star.layer !== "natal" && (
             <p className="rounded-lg bg-muted/60 p-2 text-xs text-muted-foreground">
@@ -342,86 +357,24 @@ const NOTE_KIND = {
 } as const;
 
 /** Thẻ ý nghĩa của sao tại một cung: dữ liệu sẵn có (nếu có), người dùng sửa / bổ sung được. */
-function StarPalaceNote({
-  starId,
-  starName,
-  palaceName,
-  branch,
-  kind,
-  defaultText,
-}: {
-  starId: string;
-  starName: string;
-  palaceName: string;
-  branch: number;
-  kind: keyof typeof NOTE_KIND;
-  defaultText?: string;
-}) {
-  const key = `${starId}@${palaceName}`;
-  const note = useChartStore((s) => s.starPalaceNotes[key]);
-  const setNote = useChartStore((s) => s.setStarPalaceNote);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  useEffect(() => setEditing(false), [key]);
-  const custom = mounted ? note : undefined;
-  const shown = custom ?? defaultText;
+function StarPalaceNote({ starId, starName, palaceName, branch, kind, defaultText }: { starId: string; starName: string; palaceName: string; branch: number; kind: keyof typeof NOTE_KIND; defaultText?: string }) {
   const k = NOTE_KIND[kind];
-
   return (
-    <div className={cn("rounded-lg border p-2.5", k.card)}>
-      <div className="mb-1 flex items-center gap-1.5">
-        <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", k.tag)}>{k.label}</span>
-        <span className="text-sm font-semibold">{palaceName}</span>
-        <span className="text-xs text-muted-foreground">({branchName(branch)})</span>
-        {custom && defaultText && <span className="text-[10px] text-muted-foreground">· đã sửa</span>}
-        {!editing && (
-          <button
-            type="button"
-            onClick={() => {
-              setDraft(shown ?? "");
-              setEditing(true);
-            }}
-            aria-label="Sửa ý nghĩa"
-            title={shown ? "Sửa ý nghĩa" : "Thêm ý nghĩa"}
-            className="ml-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <PencilLine className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-      {editing ? (
-        <div className="space-y-2">
-          <textarea
-            id="star-palace-note"
-            aria-label={`Ý nghĩa của ${starName} tại cung ${palaceName}`}
-            className="min-h-[88px] w-full rounded-md border border-input bg-card p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={`Ví dụ: ${starName} tại ${palaceName} chủ về…`}
-            autoFocus
-          />
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => { setNote(key, draft === defaultText ? "" : draft); setEditing(false); }}>
-              <Check /> Lưu
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
-              Huỷ
-            </Button>
-            {custom && (
-              <Button size="sm" variant="ghost" className="ml-auto text-destructive" onClick={() => { setNote(key, ""); setEditing(false); }}>
-                <Trash2 /> {defaultText ? "Khôi phục mặc định" : "Xoá"}
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : shown ? (
-        <p className={cn("whitespace-pre-wrap leading-snug", kind === "self" ? "text-[15px]" : "text-sm text-foreground/85")}>{shown}</p>
-      ) : (
-        <p className="text-sm italic text-muted-foreground">Chưa có – bấm bút để thêm.</p>
-      )}
-    </div>
+    <EditableNote
+      noteKey={palaceNoteKey(starId, palaceName)}
+      defaultText={defaultText}
+      className={k.card}
+      textClassName={kind === "self" ? "text-[15px]" : "text-foreground/85"}
+      ariaLabel={`Ý nghĩa của ${starName} tại cung ${palaceName}`}
+      placeholder={`Ví dụ: ${starName} tại ${palaceName} chủ về…`}
+      header={
+        <>
+          <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", k.tag)}>{k.label}</span>
+          <span className="text-sm font-semibold">{palaceName}</span>
+          <span className="text-xs text-muted-foreground">({branchName(branch)})</span>
+        </>
+      }
+    />
   );
 }
 

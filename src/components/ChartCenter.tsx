@@ -12,7 +12,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolbar?: React.ReactNode; body?: React.ReactNode }) {
+export function ChartCenter({ chart, toolbar, nameAction, body }: { chart: TuViChart; toolbar?: React.ReactNode; nameAction?: React.ReactNode; body?: React.ReactNode }) {
   const b = chart.birth;
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
@@ -25,7 +25,14 @@ export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolba
       <div className="my-auto">
       <div className="mb-2 text-center">
         <div className="text-[length:calc(10px*var(--k,1))] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lá số Tử Vi</div>
-        <div className="mt-0.5 truncate font-serif text-[length:calc(18px*var(--k,1))] font-bold text-foreground">{chart.input.name || "Không tên"}</div>
+        <div className="mt-0.5 flex items-center justify-center gap-1">
+          <span className="truncate font-serif text-[length:calc(18px*var(--k,1))] font-bold text-foreground">{chart.input.name || "Không tên"}</span>
+          {nameAction && (
+            <span className="no-print" data-export-hide="1">
+              {nameAction}
+            </span>
+          )}
+        </div>
         <div className="text-[length:calc(11px*var(--k,1))] text-muted-foreground">
           {chart.yinYangGender} · {SCHOOLS[chart.input.schoolId]?.config.schoolName}
         </div>
@@ -44,7 +51,7 @@ export function ChartCenter({ chart, toolbar, body }: { chart: TuViChart; toolba
         </div>
         <div>
           <Row label="Bản Mệnh" value={chart.banMenh.name} />
-          <Row label="Cục" value={`${chart.cuc.name} · khởi hạn ${chart.cuc.number} tuổi`} />
+          <Row label="Cục" value={chart.cuc.name} />
           <Row label="Mệnh – Cục" value={chart.menhCucRelation} />
           <Row label="Chủ Mệnh" value={chart.chuMenh} />
           <Row label="Chủ Thân" value={chart.chuThan} />

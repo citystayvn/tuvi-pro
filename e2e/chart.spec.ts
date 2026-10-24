@@ -86,7 +86,21 @@ test("Ngày âm lịch tháng nhuận không hợp lệ bị từ chối", async
 
 test("Trang danh mục sao", async ({ page }) => {
   await page.goto("/registry");
-  await expect(page.getByRole("cell", { name: /Tử Vi/ }).first()).toBeVisible();
+  const editor = page.getByTestId("star-editor");
+  await expect(editor).toContainText("Tử Vi");
+  await expect(editor).toContainText("Hợp vị trí lãnh đạo, quản lý");
+  await page.getByLabel("Tìm sao").fill("Thiên Tài");
+  await page.getByRole("button", { name: /Thiên Tài/ }).click();
+  await expect(editor).toContainText("Anh chị em giỏi giang");
+  // Sửa tính chất ở danh mục → lá số dùng nội dung mới.
+  await page.getByLabel("Tìm sao").fill("Tử Vi");
+  await page.getByRole("button", { name: /^Tử Vi/ }).click();
+  await editor.getByRole("button", { name: "Sửa ý nghĩa" }).first().click();
+  await editor.getByRole("textbox").fill("Sao đế vương, tính chất do tôi khai báo.");
+  await editor.getByRole("button", { name: "Lưu" }).click();
+  await page.goto(CHART_URL);
+  await page.locator('[data-palace="ngo"] [data-star="tu-vi"]').click();
+  await expect(page.getByTestId("star-detail")).toContainText("tính chất do tôi khai báo");
 });
 
 test("Xuất PNG và PDF", async ({ page }) => {
@@ -115,7 +129,7 @@ test("Thêm và sửa ý nghĩa riêng của sao tại một cung", async ({ pag
   await expect(detail).toContainText("Ý nghĩa theo cung");
   await expect(detail).toContainText("Quan Lộc");
   await detail.getByRole("button", { name: "Sửa ý nghĩa" }).first().click();
-  await page.locator("#star-palace-note").fill("Tử Vi ở Quan Lộc: sự nghiệp vững, có quyền.");
+  await detail.getByRole("textbox").fill("Tử Vi ở Quan Lộc: sự nghiệp vững, có quyền.");
   await detail.getByRole("button", { name: "Lưu" }).click();
   await expect(detail).toContainText("sự nghiệp vững, có quyền");
   await page.reload();

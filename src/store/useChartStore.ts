@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChartRequest } from "@/core/chart/buildChart";
@@ -28,7 +29,10 @@ interface ChartState {
   saved: SavedChart[];
   saveChart: (c: SavedChart) => void;
   removeChart: (id: string) => void;
-  /** Ý nghĩa riêng của sao tại một cung do người dùng tự viết. Khoá: "<id sao>@<tên cung>". */
+  /**
+   * Nội dung luận giải do người dùng tự viết, ghi đè dữ liệu mặc định.
+   * Khoá: "<id sao>@<tên cung>" (ý nghĩa tại cung) hoặc "<id sao>#<trường>" (core, positive, negative, favorable, unfavorable).
+   */
   starPalaceNotes: Record<string, string>;
   setStarPalaceNote: (key: string, text: string) => void;
 }
@@ -65,3 +69,15 @@ export const useChartStore = create<ChartState>()(
     { name: "tuvi-pro-store", version: 1 },
   ),
 );
+
+export type StarTraitField = "core" | "positive" | "negative" | "favorable" | "unfavorable";
+export const palaceNoteKey = (starId: string, palace: string) => `${starId}@${palace}`;
+export const traitNoteKey = (starId: string, field: StarTraitField) => `${starId}#${field}`;
+
+/** Nội dung người dùng đã sửa (chỉ đọc sau khi client mount để tránh lệch hydration). */
+export function useStarNote(key: string): string | undefined {
+  const note = useChartStore((s) => s.starPalaceNotes[key]);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted ? note : undefined;
+}

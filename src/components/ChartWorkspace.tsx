@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, LayoutGrid, Link2, Pencil, Printer, ScrollText, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, Bookmark, ChevronLeft, ChevronRight, Download, FileDown, Link2, Pencil, Printer, SlidersHorizontal } from "lucide-react";
 import { buildChart, type ChartRequest } from "@/core/chart/buildChart";
 import { CalendarInputError } from "@/core/calendar";
 import type { ChartStar } from "@/types/chart";
@@ -14,14 +14,12 @@ import { cn } from "@/utils/cn";
 import { PageHeader } from "./AppShell";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { TuViChart } from "./TuViChart";
 import { ChartControls } from "./ChartControls";
 import { CenterEditForm } from "./CenterEditForm";
 import { Switch } from "./ui/switch";
 import { PalaceDetail, StarDetail } from "./DetailPanel";
-import { InterpretationView } from "./InterpretationView";
 import { BirthForm } from "./BirthForm";
 
 /** Bản đóng gói chạy trong Claude: khung xem chặn in, tải file và liên kết trang. */
@@ -97,7 +95,6 @@ export function ChartWorkspace() {
   }, [request, viewYear]);
 
   const [showWarnings, setShowWarnings] = useState(false);
-  const [tab, setTab] = useState<"chart" | "interpretation">("chart");
   const [centerMode, setCenterMode] = useState<"info" | "edit" | "display">("info");
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
@@ -117,7 +114,7 @@ export function ChartWorkspace() {
   }, []);
   useLayoutEffect(() => {
     fit();
-  }, [fit, result?.ok, isDesktop, tab]);
+  }, [fit, result?.ok, isDesktop]);
   useEffect(() => {
     const el = viewportRef.current;
     window.addEventListener("resize", fit);
@@ -127,12 +124,12 @@ export function ChartWorkspace() {
       window.removeEventListener("resize", fit);
       ro?.disconnect();
     };
-  }, [fit, tab, result?.ok]);
+  }, [fit, result?.ok]);
 
   // Cỡ chữ lớn nhất mà mọi ô vẫn chứa đủ nội dung (không tràn dọc, không cắt tên sao).
   useLayoutEffect(() => {
     const el = chartRef.current;
-    if (!el || tab !== "chart") return;
+    if (!el) return;
     const overflows = () => {
       for (const g of el.querySelectorAll<HTMLElement>("[data-palace] > div.grid")) if (g.scrollHeight > g.clientHeight + 1) return true;
       for (const t of el.querySelectorAll<HTMLElement>(".truncate")) if (t.scrollWidth > t.clientWidth + 1) return true;
@@ -299,15 +296,7 @@ export function ChartWorkspace() {
         </p>
       </div>
       {actions}
-      <TabsList className="grid h-9 w-full grid-cols-2">
-        <TabsTrigger value="chart">
-          <LayoutGrid /> Lá số
-        </TabsTrigger>
-        <TabsTrigger value="interpretation">
-          <ScrollText /> Luận giải
-        </TabsTrigger>
-      </TabsList>
-      {tab === "chart" && <ChartControls viewYear={viewYear} onViewYear={changeYear} display={display} onDisplay={setDisplay} inline />}
+      {<ChartControls viewYear={viewYear} onViewYear={changeYear} display={display} onDisplay={setDisplay} inline />}
       {warningsBlock}
     </div>
   );
@@ -324,21 +313,29 @@ export function ChartWorkspace() {
       active ? "border-primary bg-accent text-accent-foreground" : "bg-card",
     );
 
+  const nameAction = (
+    <button
+      type="button"
+      onClick={() => setCenterMode((m) => (m === "edit" ? "info" : "edit"))}
+      aria-label="Sửa"
+      title="Sửa thông tin lá số"
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&_svg]:h-[calc(14px*var(--k,1))] [&_svg]:w-[calc(14px*var(--k,1))]",
+        centerMode === "edit" && "bg-accent text-accent-foreground",
+      )}
+    >
+      <Pencil />
+    </button>
+  );
+
   const centerToolbar = (
     <div className="flex flex-col items-center gap-1.5">
       <div className="flex flex-wrap items-center justify-center gap-1">
-        <button type="button" className={cBtn(centerMode === "edit")} onClick={() => setCenterMode((m) => (m === "edit" ? "info" : "edit"))} aria-label="Sửa">
-          <Pencil /> Sửa
-        </button>
         <button type="button" className={cBtn()} onClick={save} aria-label="Lưu">
           <Bookmark /> Lưu
         </button>
         <button type="button" className={cBtn(centerMode === "display")} onClick={() => setCenterMode((m) => (m === "display" ? "info" : "display"))} aria-label="Hiển thị">
           <SlidersHorizontal /> Hiển thị
-        </button>
-        <span className="mx-0.5 h-4 w-px bg-border" />
-        <button type="button" className={cBtn()} onClick={() => setTab("interpretation")}>
-          <ScrollText /> Luận giải
         </button>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-1">
@@ -429,6 +426,7 @@ export function ChartWorkspace() {
             onSelectPalace={onSelectPalace}
             onSelectStar={onSelectStar}
             centerToolbar={centerControls ? centerToolbar : undefined}
+            centerNameAction={centerControls ? nameAction : undefined}
             centerBody={centerControls ? centerBody : undefined}
           />
         </div>
@@ -436,24 +434,14 @@ export function ChartWorkspace() {
     </div>
   );
 
-  const mainContent =
-    tab === "chart" ? (
-      chartView
-    ) : (
-      <div className="space-y-3">
-        <Button variant="outline" size="sm" onClick={() => setTab("chart")}>
-          <ChevronLeft /> Quay lại lá số
-        </Button>
-        <InterpretationView chart={chart} />
-      </div>
-    );
+  const mainContent = chartView;
 
   return (
-    <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+    <>
       {isDesktop ? (
         <div className="flex h-screen">
-          <div className={cn("min-w-0 flex-1 p-3", tab === "chart" ? "overflow-hidden" : "overflow-auto")}>{mainContent}</div>
-          {tab === "chart" && (
+          <div className={"min-w-0 flex-1 overflow-hidden p-3"}>{mainContent}</div>
+          {(
           <aside className="no-print flex h-screen w-[360px] shrink-0 flex-col gap-4 overflow-y-auto border-l bg-card/60 p-4">
             {warningsBlock}
             {(
@@ -479,10 +467,9 @@ export function ChartWorkspace() {
         </div>
       ) : (
         <div className="space-y-3 p-3">
-          {tab !== "chart" && !centerControls && controlPanel}
           {mainContent}
-          {tab === "chart" && !centerControls && controlPanel}
-          {tab === "chart" && !centerControls && <Legend />}
+          {!centerControls && controlPanel}
+          {!centerControls && <Legend />}
           <Sheet open={!!detail} onOpenChange={(o) => !o && clearSelection()}>
             {detail && <SheetContent title={selectedStar ? selectedStar.displayName : `Cung ${chart.palaces[selectedBranch!].name}`}>{detail}</SheetContent>}
           </Sheet>
@@ -517,7 +504,7 @@ export function ChartWorkspace() {
           {toast}
         </div>
       )}
-    </Tabs>
+    </>
   );
 }
 
